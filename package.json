@@ -1,0 +1,22 @@
+{
+  "name": "dbs-mini-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nandy-006/DBS-Mini-Project.git"
+  },
+  "author": "Nandy006",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nandy-006/DBS-Mini-Project/issues"
+  },
+  "homepage": "https://github.com/Nandy-006/DBS-Mini-Project#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
