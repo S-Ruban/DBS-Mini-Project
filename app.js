@@ -1,7 +1,16 @@
+require("dotenv").config()
 const express = require("express");
+const signup = require("./Routes/signup");
 
-const server = express();
-PORT = 5000;
-server.listen(PORT, () => {
-    console.log(`Listening on port ${PORT}`);
+const app = express();
+port = process.env.SERVER_PORT
+app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
 })
+app.use(express.json());
+
+app.get("/", (req, res) => {
+    res.json({message: "Hello World"});
+})
+
+app.use('/signup', signup);
