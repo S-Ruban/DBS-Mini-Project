@@ -13,9 +13,10 @@ router.get("/", async (req, res) => {
             );
             res.json(users.rowCount);
         } else
-            res.json("Sign Up Page");
+            res.send("Sign Up Page");
     } catch (err) {
         console.error(err.message);
+        res.status(500).send(err.message);
     }
 })
 
@@ -29,10 +30,13 @@ router.post("/", async (req, res) => {
         );
         res.json(newUser);
     } catch (err) {
-        if(err.constraint == "users_pkey")
-            res.json("Username already exsits");
-        else
+        if(err.constraint == "users_pkey") {
+            res.status(400).send("Username already exists");
+        }
+        else {
             console.error(err.message);
+            res.status(500).send(err.message);
+        }
     }
 });
 

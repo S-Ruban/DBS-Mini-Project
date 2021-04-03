@@ -1,6 +1,7 @@
 require("dotenv").config()
 const express = require("express");
 const signup = require("./Routes/signup");
+const signin = require("./Routes/signin");
 
 const app = express();
 port = process.env.SERVER_PORT
@@ -14,3 +15,4 @@ app.get("/", (req, res) => {
 })
 
 app.use('/signup', signup);
+app.use('/signin', signin);
