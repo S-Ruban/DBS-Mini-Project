@@ -2,10 +2,11 @@ require("dotenv").config()
 const express = require("express");
 const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
-const pool = require("./Models/db");
+const pool = require("./Models/dbConfig");
 const {auth, unauth} = require("./auth");
 const signup = require("./Routes/signup");
 const signin = require("./Routes/signin");
+const profile = require("./Routes/profile");
 
 const app = express();
 app.listen(process.env.SERVER_PORT, () => {
@@ -36,6 +37,8 @@ app.get("/", (req, res) => {
 
 app.use('/signin', unauth, signin);
 app.use('/signup', unauth, signup);
+
+app.use('/profile', auth, profile);
 
 app.get('/dashboard', auth, (req, res) => {
     try {

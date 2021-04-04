@@ -1,7 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const pool = require("../Models/db");
-const auth = require("../auth");
+const pool = require("../Models/dbConfig");
 
 const router = express.Router();
 
@@ -25,7 +24,7 @@ router.post("/", async (req, res) => {
         if(pass.rowCount && bcrypt.compareSync(credentials.pass, pass.rows[0].pass)) {
             req.session.user = {
                 uname: credentials.uname,
-                type: getType(credentials.uname)
+                type: await getType(credentials.uname)
             }
             res.send(req.session);
         }
@@ -38,23 +37,28 @@ router.post("/", async (req, res) => {
 });
 
 const getType = async (uname) => {
-    let user = null;
+    try {
+        let user = null;
+        user = await pool.query(
+            "SELECT * FROM CUSTOMERS WHERE Cust_Uname = $1",
+            [uname]
+        );
+        if(user.rowCount)
+            return "customer"
 
-    user = await pool.query(
-        "SELECT * FROM CUSTOMERS WHERE Cust_Uname = $1",
-        [uname]
-    );
-    if(user.rowCount)
-        return "customer"
+        user = await pool.query(
+            "SELECT * FROM RESTAURANTS WHERE Rest_Uname = $1",
+            [uname]
+        );
 
-    user = await pool.query(
-        "SELECT * FROM RESTAURANTS WHERE Rest_Uname = $1",
-        [uname]
-    );
-    if(user.rowCount)
-        return "restaurant"
-    else
-        return "delivery"
+        if(user.rowCount)
+            return "restaurant"
+        else
+            return "delivery"
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send(err.message);
+    }
 }
 
 module.exports = router;
