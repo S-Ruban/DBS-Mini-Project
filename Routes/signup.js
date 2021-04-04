@@ -36,8 +36,8 @@ router.post("/", async (req, res) => {
             );
         } else if(user.type === "restaurant") {
             await pool.query(
-                "INSERT INTO RESTAURANTS VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
-                [user.uname, user.fssai, user.rest_name, user.img_link, user.aline1, user.aline2, user.city, user.pin, user.lat, user.long, user.isopen, null]
+                "INSERT INTO RESTAURANTS VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+                [user.uname, user.fssai, user.rest_name, user.img_link, user.aline1, user.aline2, user.city, user.pin, user.lat, user.long, user.isopen]
             );
             for(let phone of user.phones) {
                 await pool.query(

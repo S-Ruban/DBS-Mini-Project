@@ -3,10 +3,11 @@ const express = require("express");
 const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
 const pool = require("./Models/dbConfig");
-const {auth, unauth} = require("./auth");
+const auth = require("./auth");
 const signup = require("./Routes/signup");
 const signin = require("./Routes/signin");
 const profile = require("./Routes/profile");
+const cart = require("./Routes/cart");
 
 const app = express();
 app.listen(process.env.SERVER_PORT, () => {
@@ -35,12 +36,12 @@ app.get("/", (req, res) => {
     res.json({message: "Hello World"});
 })
 
-app.use('/signin', unauth, signin);
-app.use('/signup', unauth, signup);
+app.use('/signin', auth.unauth, signin);
+app.use('/signup', auth.unauth, signup);
+app.use('/profile', auth.auth, profile);
+app.use('/cart', auth.authCustomer, cart);
 
-app.use('/profile', auth, profile);
-
-app.get('/dashboard', auth, (req, res) => {
+app.get('/dashboard', auth.auth, (req, res) => {
     try {
         res.send(`Welcome to Dashboard ${req.session.user.uname}!`);
     } catch (err) {
@@ -49,7 +50,7 @@ app.get('/dashboard', auth, (req, res) => {
     }
 })
 
-app.get('/signout', auth, (req, res) => {
+app.get('/signout', auth.auth, (req, res) => {
     req.session.destroy();
     res.send("Signed Out!");
 });

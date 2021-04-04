@@ -12,4 +12,11 @@ const unauth = (req, res, next) => {
         res.status(401).send("Please Sign Out First");
 }
 
-module.exports = {auth, unauth};
+const authCustomer = (req, res, next) => {
+    if(req.session && req.session.user && req.session.user.type === "customer")
+        next();
+    else
+        res.status(401).send("Authorized only to customers");
+}
+
+module.exports = {auth, unauth, authCustomer};
