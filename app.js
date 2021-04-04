@@ -3,7 +3,7 @@ const express = require("express");
 const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
 const pool = require("./Models/db");
-const auth = require("./auth");
+const {auth, unauth} = require("./auth");
 const signup = require("./Routes/signup");
 const signin = require("./Routes/signin");
 
@@ -34,8 +34,8 @@ app.get("/", (req, res) => {
     res.json({message: "Hello World"});
 })
 
-app.use('/signin', signin);
-app.use('/signup', signup);
+app.use('/signin', unauth, signin);
+app.use('/signup', unauth, signup);
 
 app.get('/dashboard', auth, (req, res) => {
     try {

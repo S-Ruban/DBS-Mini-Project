@@ -16,8 +16,6 @@ router.get("/", (req, res) => {
 
 router.post("/", async (req, res) => {
     try {
-        if(req.session.user)
-            res.send("Please Sign Out first");
         const credentials = req.body;
         const pass = await pool.query(
             "SELECT * FROM USERS WHERE UNAME = $1",

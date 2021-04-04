@@ -47,8 +47,8 @@ router.post("/", async (req, res) => {
             }
         } else {
             await pool.query(
-                "INSERT INTO DELIVERY_PERSONS VALUES ($1, $2, $3, $4)",
-                [user.uname, user.vno, user.vmodel, user.vcolour]
+                "INSERT INTO DELIVERY_PERSONS VALUES ($1, $2, $3, $4, $5)",
+                [user.uname, user.vno, user.vmodel, user.vcolour, false]
             );
         }
         res.json(newUser);
