@@ -7,7 +7,7 @@ const auth = require("./auth");
 const signup = require("./Routes/signup");
 const signin = require("./Routes/signin");
 const profile = require("./Routes/profile");
-const cart = require("./Routes/cart");
+const orders = require("./Routes/orders");
 
 const app = express();
 app.listen(process.env.SERVER_PORT, () => {
@@ -39,7 +39,7 @@ app.get("/", (req, res) => {
 app.use('/signin', auth.unauth, signin);
 app.use('/signup', auth.unauth, signup);
 app.use('/profile', auth.auth, profile);
-app.use('/cart', auth.authCustomer, cart);
+app.use('/orders', auth.authCustomer, orders);
 
 app.get('/dashboard', auth.auth, (req, res) => {
     try {
