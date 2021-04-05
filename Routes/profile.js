@@ -1,6 +1,6 @@
 const express = require("express");
 const pool = require("../Models/dbConfig");
-const {setStatement} = require("../Models/helpers");
+const {setStatement, getFSSAI} = require("../Models/helpers");
 
 const router = express.Router();
 
@@ -74,11 +74,7 @@ router.post("/:phone", async (req, res) => {
         if(req.session.user.type !== "restaurant")
             res.status(401).send("Authorized only for restaurants");
         else {
-            const fetch = await pool.query(
-                "SELECT * FROM RESTAURANTS WHERE Rest_Uname = $1",
-                [req.session.user.uname]
-            );
-            const fssai = fetch.rows[0].fssai;
+            const fssai = await getFSSAI(req.session.user.uname);
             const added = await pool.query(
                 "INSERT INTO RESTAURANT_PHONE VALUES($1, $2) RETURNING *",
                 [fssai, req.params.phone]
@@ -95,11 +91,16 @@ router.delete("/:phone", async (req, res) => {
     try {
         if(req.session.user.type !== "restaurant")
             res.status(401).send("Authorized only for restaurants");
-        await pool.query(
-            "DELETE FROM RESTAURANT_PHONE WHERE Phone = $1",
-            [req.params.phone]
-        );
-        res.send("Successfully deleted!");
+        else {
+            const result = await pool.query(
+                "DELETE FROM RESTAURANT_PHONE WHERE Phone = $1",
+                [req.params.phone]
+            );
+            if(result.rowCount)
+                res.send("Successfully deleted!");
+            else
+                res.status(404).send("Phone number not found");
+        }
     } catch (err) {
         console.log(err.message);
         res.status(500).send(err.message);

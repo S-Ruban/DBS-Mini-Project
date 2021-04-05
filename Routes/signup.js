@@ -54,7 +54,7 @@ router.post("/", async (req, res) => {
         res.json(newUser);
     } catch (err) {
         if(err.constraint === "users_pkey") {
-            res.status(400).send("Username already exists");
+            res.status(409).send("Username already exists");
         }
         else {
             console.error(err.message);

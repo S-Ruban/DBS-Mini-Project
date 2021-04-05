@@ -34,3 +34,11 @@ WHERE
     FI.ItemNo = OC.ItemNo AND 
     FI.FSSAI = O.FSSAI 
 GROUP BY ( Order_No, Order_Time, isCompleted, Customer, Restaurant);
+
+--Fetch all details of particular order
+SELECT * FROM ORDERS WHERE OrderNo = {order_no};
+SELECT * FROM CUSTOMERS WHERE Cust_Uname = {cust_uname};
+SELECT * FROM RESTAURANTS WHERE Rest_Uname = {rest_uname};
+SELECT * FROM DELIVERY_PERSONS WHERE Del_Uname = {del_uname};
+SELECT FI.ItemName, FI.Price, OC.Quantity FROM ORDER_CONTENTS OC, FOOD_ITEMS FI
+WHERE OC.OrderNo = {order_no} AND OC.ItemNo = FI.ItemNo AND OC.FSSAI = FI.FSSAI;

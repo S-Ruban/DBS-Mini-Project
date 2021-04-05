@@ -1,3 +1,5 @@
+const pool = require("./dbConfig");
+
 const setStatement = (patch, initialNum = 1) => {
     let query = `SET`
     let params = [];
@@ -12,5 +14,26 @@ const setStatement = (patch, initialNum = 1) => {
     return {query, params, nextIndex: initialNum+i};
 };
 
+const getRestUname = async (fssai) => {
+    const result = await pool.query(
+        "SELECT * FROM RESTAURANTS WHERE FSSAI = $1",
+        [fssai]
+    );
+    if(result.rowCount)
+        return result.rows[0].rest_uname;
+    else
+        return null;
+}
 
-module.exports = {setStatement};
+const getFSSAI = async (rest_uname) => {
+    const result = await pool.query(
+        "SELECT * FROM RESTAURANTS WHERE Rest_Uname = $1",
+        [rest_uname]
+    );
+    if(result.rowCount)
+        return result.rows[0].fssai;
+    else
+        return null;
+}
+
+module.exports = {setStatement, getRestUname, getFSSAI};

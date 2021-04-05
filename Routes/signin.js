@@ -50,7 +50,6 @@ const getType = async (uname) => {
             "SELECT * FROM RESTAURANTS WHERE Rest_Uname = $1",
             [uname]
         );
-
         if(user.rowCount)
             return "restaurant"
         else
