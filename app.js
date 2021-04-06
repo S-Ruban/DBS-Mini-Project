@@ -2,6 +2,9 @@ require("dotenv").config()
 const express = require("express");
 const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
+const morgan = require("morgan");
+const helmet = require("helmet");
+const cors = require("cors");
 const pool = require("./Models/dbConfig");
 const {auth, unauth, authCustomer} = require("./auth");
 const signup = require("./Routes/signup");
@@ -13,9 +16,12 @@ const restaurants = require("./Routes/restaurants");
 const cart = require("./Routes/cart");
 
 const app = express();
+app.use(helmet)
+app.use(morgan("dev"));
+app.use(cors());
 app.listen(process.env.SERVER_PORT, () => {
     console.log(`Listening on port ${process.env.SERVER_PORT}`);
-})
+});
 
 const sessionConfig = {
     store: new pgSession({
