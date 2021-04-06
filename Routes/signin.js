@@ -26,7 +26,7 @@ router.post("/", async (req, res) => {
                 uname: credentials.uname,
                 type: await getType(credentials.uname)
             }
-            res.send(req.session);
+            res.status(202).send(req.session);
         }
         else
             res.send("Impostor");

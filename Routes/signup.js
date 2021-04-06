@@ -51,7 +51,7 @@ router.post("/", async (req, res) => {
                 [user.uname, user.vno, user.vmodel, user.vcolour, false]
             );
         }
-        res.json(newUser);
+        res.status(202).send(newUser);
     } catch (err) {
         if(err.constraint === "users_pkey") {
             res.status(409).send("Username already exists");

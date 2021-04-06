@@ -1,6 +1,6 @@
 const express = require("express");
 const pool = require("../Models/dbConfig");
-const {setStatement, getFSSAI} = require("../Models/helpers");
+const {getSetStatement, getFSSAI} = require("../Models/helpers");
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ router.patch("/", async (req, res) => {
         
         let updatedUser = null;
         if(Object.keys(patch.user).length) {
-            const setUserStatement = setStatement(patch.user);
+            const setUserStatement = getSetStatement(patch.user);
             updatedUser = await pool.query(
                 `UPDATE USERS ${setUserStatement.query} WHERE uname = $${setUserStatement.nextIndex}`,
                 setUserStatement.params.concat([req.session.user.uname])
@@ -28,7 +28,7 @@ router.patch("/", async (req, res) => {
 
         let updatedType = null;
         if(Object.keys(patch.type).length) {
-            const setTypeStatement = setStatement(patch.type);
+            const setTypeStatement = getSetStatement(patch.type);
             if(req.session.user.type === "customer") {
                 updatedType = await pool.query(
                     `UPDATE CUSTOMERS ${setTypeStatement.query} WHERE Cust_Uname = $${setTypeStatement.nextIndex}`,
@@ -79,7 +79,7 @@ router.post("/:phone", async (req, res) => {
                 "INSERT INTO RESTAURANT_PHONE VALUES($1, $2) RETURNING *",
                 [fssai, req.params.phone]
             );
-            res.send(added);
+            res.status(202).send(added);
         }
     } catch (err) {
         console.log(err.message);

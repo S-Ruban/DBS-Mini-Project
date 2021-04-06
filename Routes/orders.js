@@ -1,6 +1,6 @@
 const express = require("express");
 const pool = require("../Models/dbConfig");
-const {getRestUName, setStatement} = require("../Models/helpers");
+const {getRestUName, getSetStatement} = require("../Models/helpers");
 
 const router = express.Router();
 
@@ -123,10 +123,7 @@ router.delete("/:order_no", async (req, res) => {
 
 router.patch("/:order_no", async (req, res) => {
     try {
-        let order = await pool.query(
-            "SELECT * FROM ORDERS WHERE OrderNo = $1",
-            [req.params.order_no]
-        );
+        let order = await pool.query( "SELECT * FROM ORDERS WHERE OrderNo = $1", [req.params.order_no]);
         if(!order.rowCount)
             res.status(404).send("Order does not exist");
         else if(
@@ -134,7 +131,7 @@ router.patch("/:order_no", async (req, res) => {
             (req.session.user.type === "delivery" && req.session.user.uname === order.rows[0].del_uname) ||
             (req.session.user.type === "restaurant" && req.session.user.uname === await getRestUName(order.rows[0].fssai))
         ) {
-            const setOrderStatement = setStatement(req.body);
+            const setOrderStatement = getSetStatement(req.body);
             order = await pool.query(
                 `UPDATE ORDERS ${setOrderStatement.query} WHERE OrderNo = $${setOrderStatement.nextIndex} RETURNING *`,
                 setOrderStatement.params.concat([req.params.order_no])
