@@ -42,3 +42,14 @@ SELECT * FROM RESTAURANTS WHERE Rest_Uname = {rest_uname};
 SELECT * FROM DELIVERY_PERSONS WHERE Del_Uname = {del_uname};
 SELECT FI.ItemName, FI.Price, OC.Quantity FROM ORDER_CONTENTS OC, FOOD_ITEMS FI
 WHERE OC.OrderNo = {order_no} AND OC.ItemNo = FI.ItemNo AND OC.FSSAI = FI.FSSAI;
+
+--Fetch the cart
+SELECT O.OrderNo AS Order_No, R.Rest_Name As Restaurant, FI.ItemName, FI.Price, OC.Quantity 
+FROM ORDERS O, ORDER_CONTENTS OC, RESTAURANTS R, FOOD_ITEMS FI
+WHERE
+    O.Cust_Uname = {uname} AND 
+    O.isPlaced = {false} AND 
+    O.OrderNo = OC.OrderNo AND 
+    OC.ItemNo = FI.ItemNo AND
+    OC.FSSAI = FI.FSSAI AND 
+    O.FSSAI = R.FSSAI;

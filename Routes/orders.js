@@ -12,7 +12,8 @@ router.get("/", async (req, res) => {
                 SELECT O.OrderNo AS Order_No, O.OrderTime As Order_Time, O.isPaid AS isCompleted, R.Rest_Name AS Restaurant, U.FirstName AS Delivery, SUM(OC.Quantity) AS Quantity, (SUM(OC.Quantity*FI.Price) + O.Del_Charge) AS Price
                 FROM ORDERS O, ORDER_CONTENTS OC, FOOD_ITEMS FI, RESTAURANTS R, USERS U
                 WHERE
-                    O.Cust_Uname = $1 AND 
+                    O.Cust_Uname = $1 AND
+                    O.isPaid = $2 AND 
                     O.FSSAI = R.FSSAI AND
                     O.Del_Uname = U.Uname AND 
                     OC.OrderNo = O.OrderNo AND 
@@ -20,7 +21,7 @@ router.get("/", async (req, res) => {
                     FI.FSSAI = O.FSSAI 
                 GROUP BY ( Order_No, Order_Time, isCompleted, Restaurant, Delivery);
                 `,
-                [req.session.user.uname]
+                [req.session.user.uname, true]
             );
             res.send(orders.rows);
         } else if (req.session.user.type === "restaurant") {
@@ -30,6 +31,7 @@ router.get("/", async (req, res) => {
                 FROM ORDERS O, ORDER_CONTENTS OC, FOOD_ITEMS FI, RESTAURANTS R, USERS U1, USERS U2
                 WHERE
                     R.Rest_Uname = $1 AND 
+                    O.isPaid = $2 AND 
                     O.FSSAI = R.FSSAI AND 
                     O.Cust_Uname = U1.Uname AND 
                     O.Del_Uname = U2.Uname AND 
@@ -38,7 +40,7 @@ router.get("/", async (req, res) => {
                     FI.FSSAI = O.FSSAI 
                 GROUP BY ( Order_No, Order_Time, isCompleted, Customer, Delivery);
                 `,
-                [req.session.user.uname]
+                [req.session.user.uname, true]
             );
             res.send(orders.rows);
         } else {
@@ -48,6 +50,7 @@ router.get("/", async (req, res) => {
                 FROM ORDERS O, ORDER_CONTENTS OC, FOOD_ITEMS FI, RESTAURANTS R, USERS U
                 WHERE
                     O.Del_Uname = $1 AND
+                    O.isPaid = $2 AND
                     O.Cust_Uname = U.Uname AND 
                     O.FSSAI = R.FSSAI AND 
                     OC.OrderNo = O.OrderNo AND 
@@ -55,7 +58,7 @@ router.get("/", async (req, res) => {
                     FI.FSSAI = O.FSSAI 
                 GROUP BY ( Order_No, Order_Time, isCompleted, Customer, Restaurant);
                 `,
-                [req.session.user.uname]
+                [req.session.user.uname, true]
             );
             res.send(orders.rows);
         }
@@ -68,8 +71,8 @@ router.get("/", async (req, res) => {
 router.get("/:order_no", async (req, res) => {
     try {
         const order = await pool.query(
-            "SELECT * FROM ORDERS WHERE OrderNo = $1",
-            [req.params.order_no]
+            "SELECT * FROM ORDERS WHERE OrderNo = $1 AND isPlaced = $2",
+            [req.params.order_no, true]
         );
         if(!order.rowCount)
             res.status(404).send("Order does not exist");
@@ -101,8 +104,8 @@ router.get("/:order_no", async (req, res) => {
 router.delete("/:order_no", async (req, res) => {
     try {
         const order = await pool.query(
-            "SELECT * FROM ORDERS WHERE OrderNo = $1",
-            [req.params.order_no]
+            "SELECT * FROM ORDERS WHERE OrderNo = $1 AND isPlaced = $2",
+            [req.params.order_no, true]
         );
         if(!order.rowCount)
             res.status(404).send("Order does not exist");
@@ -123,7 +126,7 @@ router.delete("/:order_no", async (req, res) => {
 
 router.patch("/:order_no", async (req, res) => {
     try {
-        let order = await pool.query( "SELECT * FROM ORDERS WHERE OrderNo = $1", [req.params.order_no]);
+        let order = await pool.query( "SELECT * FROM ORDERS WHERE OrderNo = $1 AND isPlaced = $2", [req.params.order_no, true]);
         if(!order.rowCount)
             res.status(404).send("Order does not exist");
         else if(

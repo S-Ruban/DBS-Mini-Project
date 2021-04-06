@@ -10,6 +10,7 @@ const profile = require("./Routes/profile");
 const orders = require("./Routes/orders");
 const items = require("./Routes/items");
 const restaurants = require("./Routes/restaurants");
+const cart = require("./Routes/cart");
 
 const app = express();
 app.listen(process.env.SERVER_PORT, () => {
@@ -56,6 +57,7 @@ app.use("/profile", auth, profile);
 app.use("/orders", authCustomer, orders);
 app.use("/items", auth, items);
 app.use("/restaurants", authCustomer, restaurants);
+app.use("/cart", authCustomer, cart);
 
 app.get("/signout", auth, (req, res) => {
     req.session.destroy();
