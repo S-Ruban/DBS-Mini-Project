@@ -1,16 +1,16 @@
-const express = require("express");
-const pool = require("../Models/dbConfig");
-const { getFSSAI, getSetStatement } = require("../Models/helpers");
+const express = require('express');
+const pool = require('../Models/dbConfig');
+const { getFSSAI, getSetStatement } = require('../Models/helpers');
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
 	try {
-		if (req.session.user.type !== "delivery") {
-			let query = "",
-				varcount = 0,
-				params = [];
-			if (req.session.user.type === "customer") {
+		if (req.session.user.type !== 'delivery') {
+			let query = '',
+				varcount = 0;
+			const params = [];
+			if (req.session.user.type === 'customer') {
 				query = `SELECT * FROM FOOD_ITEMS WHERE FSSAI IN (SELECT FSSAI FROM RESTAURANTS WHERE isOpen = $${
 					varcount + 1
 				}) AND isAvail = $${varcount + 2}`;
@@ -21,7 +21,7 @@ router.get("/", async (req, res) => {
 				params.push(await getFSSAI(req.session.user.uname));
 			}
 
-			if (req.session.user.type === "customer" && req.query.fssai) {
+			if (req.session.user.type === 'customer' && req.query.fssai) {
 				query += ` AND FSSAI = $${++varcount}`;
 				params.push(req.query.fssai);
 			}
@@ -42,58 +42,58 @@ router.get("/", async (req, res) => {
 				params.push(req.query.maxPrice);
 			}
 			if (req.body.cuisines.length) {
-				let cuisinecount = [];
+				const cuisinecount = [];
 				for (let i = 0; i < req.body.cuisines.length; i++)
 					cuisinecount.push(`$${++varcount}`);
-				query += ` AND Cuisine IN (${cuisinecount.join(",")})`;
+				query += ` AND Cuisine IN (${cuisinecount.join(',')})`;
 				params.concat(req.body.cuisine);
 			}
 			if (req.body.mealtypes.length) {
-				let mealtypecount = [];
+				const mealtypecount = [];
 				for (let i = 0; i < req.body.mealtypes.length; i++)
 					mealtypecount.push(`$${++varcount}`);
-				query += ` AND Mealtype IN (${mealtypecount.join(",")})`;
+				query += ` AND Mealtype IN (${mealtypecount.join(',')})`;
 				params.concat(req.body.mealtype);
 			}
 			const items = await pool.query(query, params);
 			res.send(items);
-		} else res.status(403).send("Unauthorized");
+		} else res.status(403).send('Unauthorized');
 	} catch (err) {
-		console.log(err.message);
-		res.status(500).send(err.message);
+		console.log(err.stack);
+		res.status(500).send(err.stack);
 	}
 });
 
 let fssai;
 router.use(async (req, res, next) => {
-	if (req.session.user.type === "restaurant") {
+	if (req.session.user.type === 'restaurant') {
 		fssai = await getFSSAI(req.session.user.uname);
 		next();
-	} else res.status(403).send("Unauthorized");
+	} else res.status(403).send('Unauthorized');
 });
 
-router.get("/:item_no", async (req, res) => {
+router.get('/:item_no', async (req, res) => {
 	try {
 		const item = await pool.query(
-			"SELECT * FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2",
+			'SELECT * FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2',
 			[fssai, req.params.item_no]
 		);
 		if (item.rowCount) res.send(item);
-		else res.status(404).send("Item Not Found");
+		else res.status(404).send('Item Not Found');
 	} catch (err) {
-		console.log(err.message);
-		res.status(500).send(err.message);
+		console.log(err.stack);
+		res.status(500).send(err.stack);
 	}
 });
 
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
 	try {
 		let result = await pool.query(
-			"SELECT COUNT(*) AS Count FROM FOOD_ITEMS WHERE FSSAI = $1",
+			'SELECT COUNT(*) AS Count FROM FOOD_ITEMS WHERE FSSAI = $1',
 			[fssai]
 		);
 		result = await pool.query(
-			"INSERT INTO FOOD_ITEMS VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
+			'INSERT INTO FOOD_ITEMS VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
 			[
 				result.rows[0].count + 1,
 				fssai,
@@ -109,15 +109,15 @@ router.post("/", async (req, res) => {
 		);
 		res.send(result);
 	} catch (err) {
-		console.log(err.message);
-		res.status(500).send(err.message);
+		console.log(err.stack);
+		res.status(500).send(err.stack);
 	}
 });
 
-router.patch("/:item_no", async (req, res) => {
+router.patch('/:item_no', async (req, res) => {
 	try {
 		let item = await pool.query(
-			"SELECT * FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2",
+			'SELECT * FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2',
 			[fssai, req.params.item_no]
 		);
 		if (item.rowCount) {
@@ -129,24 +129,24 @@ router.patch("/:item_no", async (req, res) => {
 				setItemStatement.params.concat([fssai, req.params.item_no])
 			);
 			res.send(item);
-		} else res.status(404).send("Item not found");
+		} else res.status(404).send('Item not found');
 	} catch (err) {
-		console.log(err.message);
-		res.status(500).send(err.message);
+		console.log(err.stack);
+		res.status(500).send(err.stack);
 	}
 });
 
-router.delete("/item_no", async (req, res) => {
+router.delete('/item_no', async (req, res) => {
 	try {
 		const result = await pool.query(
-			"DELETE FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2",
+			'DELETE FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2',
 			[fssai, req.params.item_no]
 		);
-		if (result.rowCount) res.send("Item Deleted!");
-		else res.status(404).send("Item not found");
+		if (result.rowCount) res.send('Item Deleted!');
+		else res.status(404).send('Item not found');
 	} catch (err) {
-		console.log(err.message);
-		res.status(500).send(err.message);
+		console.log(err.stack);
+		res.status(500).send(err.stack);
 	}
 });
 

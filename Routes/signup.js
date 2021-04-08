@@ -1,30 +1,30 @@
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const pool = require("../Models/dbConfig");
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const pool = require('../Models/dbConfig');
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
 	try {
 		if (req.query.uname) {
 			const users = await pool.query(
-				"SELECT * FROM USERS WHERE UNAME = $1",
+				'SELECT * FROM USERS WHERE UNAME = $1',
 				[req.query.uname]
 			);
 			res.json(users.rowCount);
-		} else res.send("Sign Up Page");
+		} else res.send('Sign Up Page');
 	} catch (err) {
-		console.error(err.message);
-		res.status(500).send(err.message);
+		console.error(err.stack);
+		res.status(500).send(err.stack);
 	}
 });
 
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
 	try {
 		const user = req.body;
 		user.pass = bcrypt.hashSync(user.pass, 12);
 		const newUser = await pool.query(
-			"INSERT INTO USERS VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+			'INSERT INTO USERS VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
 			[
 				user.uname,
 				user.pass,
@@ -35,14 +35,14 @@ router.post("/", async (req, res) => {
 			]
 		);
 
-		if (user.type === "customer") {
+		if (user.type === 'customer') {
 			await pool.query(
-				"INSERT INTO CUSTOMERS VALUES ($1, $2, $3, $4, $5)",
+				'INSERT INTO CUSTOMERS VALUES ($1, $2, $3, $4, $5)',
 				[user.uname, user.aline1, user.aline2, user.city, user.pin]
 			);
-		} else if (user.type === "restaurant") {
+		} else if (user.type === 'restaurant') {
 			await pool.query(
-				"INSERT INTO RESTAURANTS VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+				'INSERT INTO RESTAURANTS VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
 				[
 					user.uname,
 					user.fssai,
@@ -57,25 +57,25 @@ router.post("/", async (req, res) => {
 					user.isopen
 				]
 			);
-			for (let phone of user.phones) {
+			user.phones.forEach(async (phone) => {
 				await pool.query(
-					"INSERT INTO RESTAURANT_PHONE VALUES ($1, $2)",
+					'INSERT INTO RESTAURANT_PHONE VALUES ($1, $2)',
 					[user.fssai, phone]
 				);
-			}
+			});
 		} else {
 			await pool.query(
-				"INSERT INTO DELIVERY_PERSONS VALUES ($1, $2, $3, $4, $5)",
+				'INSERT INTO DELIVERY_PERSONS VALUES ($1, $2, $3, $4, $5)',
 				[user.uname, user.vno, user.vmodel, user.vcolour, false]
 			);
 		}
 		res.status(202).send(newUser);
 	} catch (err) {
-		if (err.constraint === "users_pkey") {
-			res.status(409).send("Username already exists");
-		} else {
-			console.error(err.message);
-			res.status(500).send(err.message);
+		if (err.constraint === 'users_pkey')
+			res.status(409).send('Username already exists');
+		else {
+			console.error(err.stack);
+			res.status(500).send(err.stack);
 		}
 	}
 });
