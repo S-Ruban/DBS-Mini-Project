@@ -20,10 +20,10 @@ const getType = async (uname) => {
 
 router.get('/', (req, res) => {
 	try {
-		res.send('Sign In Page');
+		res.send({ message: 'Sign In Page' });
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 
@@ -43,10 +43,10 @@ router.post('/', async (req, res) => {
 				type: await getType(credentials.uname)
 			};
 			res.status(202).send(req.session);
-		} else res.send('Impostor');
+		} else res.send('Invalid Username or Password');
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 

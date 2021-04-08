@@ -41,14 +41,14 @@ router.get('/', async (req, res) => {
 				query += ` AND Price <= $${++varcount}`;
 				params.push(req.query.maxPrice);
 			}
-			if (req.body.cuisines.length) {
+			if (req.body.cuisines && req.body.cuisines.length) {
 				const cuisinecount = [];
 				for (let i = 0; i < req.body.cuisines.length; i++)
 					cuisinecount.push(`$${++varcount}`);
 				query += ` AND Cuisine IN (${cuisinecount.join(',')})`;
 				params.concat(req.body.cuisine);
 			}
-			if (req.body.mealtypes.length) {
+			if (req.body.mealtypes && req.body.mealtypes.length) {
 				const mealtypecount = [];
 				for (let i = 0; i < req.body.mealtypes.length; i++)
 					mealtypecount.push(`$${++varcount}`);
@@ -56,11 +56,11 @@ router.get('/', async (req, res) => {
 				params.concat(req.body.mealtype);
 			}
 			const items = await pool.query(query, params);
-			res.send(items);
-		} else res.status(403).send('Unauthorized');
+			res.send(items.rows);
+		} else res.status(403).send({ message: 'Unauthorized' });
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 
@@ -69,7 +69,7 @@ router.use(async (req, res, next) => {
 	if (req.session.user.type === 'restaurant') {
 		fssai = await getFSSAI(req.session.user.uname);
 		next();
-	} else res.status(403).send('Unauthorized');
+	} else res.status(403).send({ message: 'Unauthorized' });
 });
 
 router.get('/:item_no', async (req, res) => {
@@ -78,11 +78,11 @@ router.get('/:item_no', async (req, res) => {
 			'SELECT * FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2',
 			[fssai, req.params.item_no]
 		);
-		if (item.rowCount) res.send(item);
-		else res.status(404).send('Item Not Found');
+		if (item.rowCount) res.send(item.rows[0]);
+		else res.status(404).send({ message: 'Item Not Found' });
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 
@@ -107,10 +107,10 @@ router.post('/', async (req, res) => {
 				req.body.price
 			]
 		);
-		res.send(result);
+		res.send(result.rows[0]);
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 
@@ -123,16 +123,18 @@ router.patch('/:item_no', async (req, res) => {
 		if (item.rowCount) {
 			const setItemStatement = getSetStatement(req.body);
 			item = await pool.query(
-				`UPDATE FOOD_ITEMS ${setItemStatement.query} FSSAI = $${
-					setItemStatement.nextIndex
-				} AND ItemNo = $${setItemStatement.nextIndex + 1} RETURNING *`,
+				`
+				UPDATE FOOD_ITEMS ${setItemStatement.query} 
+				WHERE FSSAI = $${setItemStatement.nextIndex} AND
+				ItemNo = $${setItemStatement.nextIndex + 1} RETURNING *
+				`,
 				setItemStatement.params.concat([fssai, req.params.item_no])
 			);
-			res.send(item);
-		} else res.status(404).send('Item not found');
+			res.send(item.rows[0]);
+		} else res.status(404).send({ message: 'Item not found' });
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 
@@ -142,11 +144,11 @@ router.delete('/item_no', async (req, res) => {
 			'DELETE FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2',
 			[fssai, req.params.item_no]
 		);
-		if (result.rowCount) res.send('Item Deleted!');
-		else res.status(404).send('Item not found');
+		if (result.rowCount) res.send({ message: 'Item Deleted!' });
+		else res.status(404).send({ message: 'Item not found' });
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 

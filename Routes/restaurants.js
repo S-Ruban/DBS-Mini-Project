@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 			query += ` AND NOT EXISTS (SELECT * FROM FOOD_ITEMS FI WHERE FI.FSSAI = R.FSSAI AND FI.isVeg = $${++varcount})`;
 			params.push(false);
 		}
-		if (req.body.cuisines.length) {
+		if (req.body.cuisines && req.body.cuisines.length) {
 			const cuisinecount = [];
 			for (let i = 0; i < req.body.cuisines.length; i++)
 				cuisinecount.push(`$${++varcount}`);
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 			)}))`;
 			params.concat(req.body.cuisine);
 		}
-		if (req.body.mealtypes.length) {
+		if (req.body.mealtypes && req.body.mealtypes.length) {
 			const mealtypecount = [];
 			for (let i = 0; i < req.body.mealtypes.length; i++)
 				mealtypecount.push(`$${++varcount}`);
@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
 		res.send(restaurants.rows);
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 
@@ -52,7 +52,7 @@ router.get('/:fssai', async (req, res) => {
 		else res.status(404).send('Restaurant not found');
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 

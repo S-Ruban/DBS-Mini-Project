@@ -1,41 +1,41 @@
 {
-  "name": "dbs-mini-project",
-  "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
-  "scripts": {
-    "start": "nodemon app.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Nandy-006/DBS-Mini-Project.git"
-  },
-  "author": "Nandy006",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Nandy-006/DBS-Mini-Project/issues"
-  },
-  "homepage": "https://github.com/Nandy-006/DBS-Mini-Project#readme",
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "connect-pg-simple": "^6.2.1",
-    "cors": "^2.8.5",
-    "dotenv": "^8.2.0",
-    "express": "^4.17.1",
-    "express-session": "^1.17.1",
-    "helmet": "^4.4.1",
-    "morgan": "^1.10.0",
-    "pg": "^8.5.1"
-  },
-  "devDependencies": {
-    "eslint": "^7.2.0",
-    "eslint-config-airbnb": "^18.2.1",
-    "eslint-config-node": "^4.1.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jsx-a11y": "^6.4.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-react": "^7.21.5",
-    "eslint-plugin-react-hooks": "^1.7.0",
-    "nodemon": "^2.0.7"
-  }
+	"name": "dbs-mini-project",
+	"version": "1.0.0",
+	"description": "",
+	"main": "app.js",
+	"scripts": {
+		"start": "nodemon app.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Nandy-006/DBS-Mini-Project.git"
+	},
+	"author": "Nandy006",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/Nandy-006/DBS-Mini-Project/issues"
+	},
+	"homepage": "https://github.com/Nandy-006/DBS-Mini-Project#readme",
+	"dependencies": {
+		"bcryptjs": "^2.4.3",
+		"connect-pg-simple": "^6.2.1",
+		"cors": "^2.8.5",
+		"dotenv": "^8.2.0",
+		"express": "^4.17.1",
+		"express-session": "^1.17.1",
+		"helmet": "^4.4.1",
+		"morgan": "^1.10.0",
+		"pg": "^8.5.1"
+	},
+	"devDependencies": {
+		"eslint": "^7.2.0",
+		"eslint-config-airbnb": "^18.2.1",
+		"eslint-config-node": "^4.1.0",
+		"eslint-plugin-import": "^2.22.1",
+		"eslint-plugin-jsx-a11y": "^6.4.1",
+		"eslint-plugin-node": "^11.1.0",
+		"eslint-plugin-react": "^7.21.5",
+		"eslint-plugin-react-hooks": "^1.7.0",
+		"nodemon": "^2.0.7"
+	}
 }

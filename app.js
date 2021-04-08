@@ -16,7 +16,7 @@ const restaurants = require('./Routes/restaurants');
 const cart = require('./Routes/cart');
 
 const app = express();
-app.use(helmet);
+app.use(helmet());
 app.use(morgan('dev'));
 app.use(cors());
 app.listen(process.env.SERVER_PORT, () => {
@@ -51,7 +51,7 @@ app.get('/dashboard', auth, (req, res) => {
 		res.send(`Welcome to Dashboard ${req.session.user.uname}!`);
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 

@@ -1,6 +1,10 @@
 const express = require('express');
 const pool = require('../Models/dbConfig');
-const { getRestUName, getSetStatement } = require('../Models/helpers');
+const {
+	getRestUname,
+	getFSSAI,
+	getSetStatement
+} = require('../Models/helpers');
 
 const router = express.Router();
 
@@ -9,17 +13,14 @@ router.get('/', async (req, res) => {
 		if (req.session.user.type === 'customer') {
 			const orders = await pool.query(
 				`
-                SELECT O.OrderNo AS Order_No, O.OrderTime As Order_Time, O.isPaid AS isCompleted, R.Rest_Name AS Restaurant, U.FirstName AS Delivery, SUM(OC.Quantity) AS Quantity, (SUM(OC.Quantity*FI.Price) + O.Del_Charge) AS Price
-                FROM ORDERS O, ORDER_CONTENTS OC, FOOD_ITEMS FI, RESTAURANTS R, USERS U
-                WHERE
-                    O.Cust_Uname = $1 AND
-                    O.isPaid = $2 AND 
-                    O.FSSAI = R.FSSAI AND
-                    O.Del_Uname = U.Uname AND 
-                    OC.OrderNo = O.OrderNo AND 
-                    FI.ItemNo = OC.ItemNo AND 
-                    FI.FSSAI = O.FSSAI 
-                GROUP BY ( Order_No, Order_Time, isCompleted, Restaurant, Delivery);
+                SELECT OrderNo AS Order_No, OrderTime As Order_Time, Rest_Name AS Restaurant, FirstName AS Delivery, SUM(Quantity) AS Quantity, (SUM(Quantity*Price) + Del_Charge) AS Price
+				FROM ((((SELECT * FROM ORDERS WHERE Cust_Uname = $1 AND isPaid = $2) AS CUSTOMER 
+					NATURAL JOIN ORDER_CONTENTS) 
+					NATURAL JOIN FOOD_ITEMS) 
+					NATURAL JOIN RESTAURANTS) 
+					JOIN USERS ON Del_Uname = Uname 
+				GROUP BY ( Order_No, Order_Time, Restaurant, Delivery, Del_Charge)
+				ORDER BY Order_Time DESC;
                 `,
 				[req.session.user.uname, true]
 			);
@@ -27,36 +28,29 @@ router.get('/', async (req, res) => {
 		} else if (req.session.user.type === 'restaurant') {
 			const orders = await pool.query(
 				`
-                SELECT O.OrderNo AS Order_No, O.OrderTime AS Order_Time, O.isPaid  AS isCompleted, U1.FirstName AS Customer, U2.FirstName AS Delivery, SUM(OC.Quantity) AS Quantity, (SUM(OC.Quantity*FI.Price) + O.Del_Charge) AS Price 
-                FROM ORDERS O, ORDER_CONTENTS OC, FOOD_ITEMS FI, RESTAURANTS R, USERS U1, USERS U2
-                WHERE
-                    R.Rest_Uname = $1 AND 
-                    O.isPaid = $2 AND 
-                    O.FSSAI = R.FSSAI AND 
-                    O.Cust_Uname = U1.Uname AND 
-                    O.Del_Uname = U2.Uname AND 
-                    OC.OrderNo = O.OrderNo AND 
-                    FI.ItemNo = OC.ItemNo AND 
-                    FI.FSSAI = O.FSSAI 
-                GROUP BY ( Order_No, Order_Time, isCompleted, Customer, Delivery);
+                SELECT OrderNo AS Order_No, OrderTime AS Order_Time, Cust_FirstName AS Customer, Del_FirstName AS Delivery, SUM(Quantity) AS Quantity, (SUM(Quantity*Price) + Del_Charge) AS Price 
+				FROM (((SELECT * FROM ORDERS WHERE FSSAI = $1 AND isPaid = $2) AS RESTAURANT 
+						NATURAL JOIN ORDER_CONTENTS) 
+						NATURAL JOIN FOOD_ITEMS) 
+						NATURAL JOIN (SELECT Uname AS Cust_Uname, FirstName AS Cust_FirstName FROM USERS) AS CUSTOMER_NAMES 
+						NATURAL JOIN (SELECT Uname AS Del_Uname, FirstName AS Del_FirstName FROM USERS) AS DELIVERY_NAMES
+				GROUP BY ( Order_No, Order_Time, Customer, Delivery, Del_Charge)
+				ORDER BY Order_Time DESC;
                 `,
-				[req.session.user.uname, true]
+				[await getFSSAI(req.session.user.uname), true]
 			);
 			res.send(orders.rows);
 		} else {
 			const orders = await pool.query(
 				`
-                SELECT O.OrderNo AS Order_No, O.OrderTime AS Order_Time, O.isPaid  AS isCompleted, U.FirstName AS Customer, R.Rest_Name AS Restaurant, SUM(OC.Quantity) AS Quantity, O.Del_Charge AS Price
-                FROM ORDERS O, ORDER_CONTENTS OC, FOOD_ITEMS FI, RESTAURANTS R, USERS U
-                WHERE
-                    O.Del_Uname = $1 AND
-                    O.isPaid = $2 AND
-                    O.Cust_Uname = U.Uname AND 
-                    O.FSSAI = R.FSSAI AND 
-                    OC.OrderNo = O.OrderNo AND 
-                    FI.ItemNo = OC.ItemNo AND 
-                    FI.FSSAI = O.FSSAI 
-                GROUP BY ( Order_No, Order_Time, isCompleted, Customer, Restaurant);
+                SELECT OrderNo AS Order_No, OrderTime AS Order_Time, FirstName AS Customer, Rest_Name AS Restaurant, SUM(Quantity) AS Quantity, Del_Charge AS Price
+				FROM ((((SELECT * FROM ORDERS WHERE Del_Uname = $1 AND isPaid = $2) AS DELIVERY_PERSON 
+						NATURAL JOIN ORDER_CONTENTS) 
+						NATURAL JOIN FOOD_ITEMS) 
+						NATURAL JOIN RESTAURANTS) 
+						JOIN USERS ON Cust_Uname = Uname
+				GROUP BY ( Order_No, Order_Time, Customer, Restaurant, Del_Charge)
+				ORDER BY Order_Time DESC;
                 `,
 				[req.session.user.uname, true]
 			);
@@ -64,7 +58,7 @@ router.get('/', async (req, res) => {
 		}
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 
@@ -74,7 +68,8 @@ router.get('/:order_no', async (req, res) => {
 			'SELECT * FROM ORDERS WHERE OrderNo = $1 AND isPlaced = $2',
 			[req.params.order_no, true]
 		);
-		if (!order.rowCount) res.status(404).send('Order does not exist');
+		if (!order.rowCount)
+			res.status(404).send({ message: 'Order does not exist' });
 		else if (
 			(req.session.user.type === 'customer' &&
 				req.session.user.uname === order.rows[0].cust_uname) ||
@@ -82,32 +77,38 @@ router.get('/:order_no', async (req, res) => {
 				req.session.user.uname === order.rows[0].del_uname) ||
 			(req.session.user.type === 'restaurant' &&
 				req.session.user.uname ===
-					(await getRestUName(order.rows[0].fssai)))
+					(await getRestUname(order.rows[0].fssai)))
 		) {
 			const customer = await pool.query(
-				'SELECT * FROM CUSTOMERS WHERE Cust_Uname = $1',
+				'SELECT * FROM USERS, CUSTOMERS WHERE Cust_Uname = $1 AND Cust_Uname = Uname',
 				[order.rows[0].cust_uname]
 			);
 			const restaurant = await pool.query(
-				'SELECT * FROM RESTAURANTS WHERE Rest_Uname = $1',
-				[await getRestUName(order.rows[0].fssai)]
+				'SELECT * FROM RESTAURANTS WHERE FSSAI = $1',
+				[order.rows[0].fssai]
 			);
 			const delivery = await pool.query(
-				'SELECT * FROM DELIVERY_PERSONS WHERE Del_Uname = $1',
+				'SELECT * FROM USERS, DELIVERY_PERSONS WHERE Del_Uname = $1 AND Del_Uname = Uname',
 				[order.rows[0].del_uname]
 			);
 			const orderContent = await pool.query(
 				`
-                SELECT FI.ItemName, FI.Price, OC.Quantity FROM ORDER_CONTENTS OC, FOOD_ITEMS FI
-                WHERE OC.OrderNo = $1 AND OC.ItemNo = FI.ItemNo AND OC.FSSAI = FI.FSSAI;
+                SELECT FI.ItemName, FI.Price, OC.Quantity FROM ORDER_CONTENTS OC, FOOD_ITEMS FI;
+				WHERE OC.OrderNo = $1 AND OC.ItemNo = FI.ItemNo AND OC.FSSAI = FI.FSSAI;
                 `,
 				[req.params.order_no]
 			);
-			res.send({ order, orderContent, customer, restaurant, delivery });
-		} else res.status(403).send('Unauthorized');
+			res.send({
+				order: order.rows[0],
+				orderContent: orderContent.rows,
+				customer: customer.rows[0],
+				restaurant: restaurant.rows[0],
+				delivery: delivery.rows[0]
+			});
+		} else res.status(403).send({ message: 'Unauthorized' });
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 
@@ -117,18 +118,21 @@ router.delete('/:order_no', async (req, res) => {
 			'SELECT * FROM ORDERS WHERE OrderNo = $1 AND isPlaced = $2',
 			[req.params.order_no, true]
 		);
-		if (!order.rowCount) res.status(404).send('Order does not exist');
-		else if (order.rows[0].isPrepared)
-			res.status(403).send('Cannot cancel order after prepared.');
-		else {
-			await pool.query('DELETE FROM ORDERS WHERE OrderNo = $3', [
+		if (!order.rowCount)
+			res.status(404).send({ message: 'Order does not exist' });
+		else if (order.rows[0].isPrepared) {
+			res.status(403).send({
+				message: 'Cannot cancel order after prepared.'
+			});
+		} else {
+			await pool.query('DELETE FROM ORDERS WHERE OrderNo = $1', [
 				req.params.order_no
 			]);
-			res.send('Cancelled Order!');
+			res.send({ message: 'Cancelled Order!' });
 		}
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 
@@ -138,7 +142,8 @@ router.patch('/:order_no', async (req, res) => {
 			'SELECT * FROM ORDERS WHERE OrderNo = $1 AND isPlaced = $2',
 			[req.params.order_no, true]
 		);
-		if (!order.rowCount) res.status(404).send('Order does not exist');
+		if (!order.rowCount)
+			res.status(404).send({ message: 'Order does not exist' });
 		else if (
 			(req.session.user.type === 'customer' &&
 				req.session.user.uname === order.rows[0].cust_uname) ||
@@ -146,18 +151,18 @@ router.patch('/:order_no', async (req, res) => {
 				req.session.user.uname === order.rows[0].del_uname) ||
 			(req.session.user.type === 'restaurant' &&
 				req.session.user.uname ===
-					(await getRestUName(order.rows[0].fssai)))
+					(await getRestUname(order.rows[0].fssai)))
 		) {
 			const setOrderStatement = getSetStatement(req.body);
 			order = await pool.query(
 				`UPDATE ORDERS ${setOrderStatement.query} WHERE OrderNo = $${setOrderStatement.nextIndex} RETURNING *`,
 				setOrderStatement.params.concat([req.params.order_no])
 			);
-			res.send(order);
-		} else res.status(403).send('Unauthorized');
+			res.send(order.rows[0]);
+		} else res.status(403).send({ message: 'Unauthorized' });
 	} catch (err) {
 		console.log(err.stack);
-		res.status(500).send(err.stack);
+		res.status(500).send({ message: err.message, stack: err.stack });
 	}
 });
 
