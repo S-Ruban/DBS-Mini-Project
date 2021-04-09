@@ -15,6 +15,7 @@ const orders = require('./Routes/orders');
 const items = require('./Routes/items');
 const restaurants = require('./Routes/restaurants');
 const cart = require('./Routes/cart');
+const ratings = require('./Routes/ratings');
 
 const app = express();
 app.use(helmet());
@@ -70,6 +71,7 @@ app.use('/orders', authCustomer, orders);
 app.use('/items', auth, items);
 app.use('/restaurants', authCustomer, restaurants);
 app.use('/cart', authCustomer, cart);
+app.use('/ratings', auth, ratings);
 
 app.get('/signout', auth, (req, res) => {
 	req.session.destroy();
