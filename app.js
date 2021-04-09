@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const pool = require('./Models/dbConfig');
 const { auth, unauth, authCustomer } = require('./auth');
+const { newWorkerUtils, newRunner } = require('./jobHelpers');
 const signup = require('./Routes/signup');
 const signin = require('./Routes/signin');
 const profile = require('./Routes/profile');
@@ -40,6 +41,11 @@ const sessionConfig = {
 
 app.use(express.json());
 app.use(session(sessionConfig));
+app.use(async (req, res, next) => {
+	app.set('workerUtils', await newWorkerUtils());
+	app.set('runner', await newRunner());
+	next();
+});
 
 app.get('/', (req, res) => {
 	if (req.session && req.session.user) res.redirect('/dashboard');
@@ -48,7 +54,9 @@ app.get('/', (req, res) => {
 
 app.get('/dashboard', auth, (req, res) => {
 	try {
-		res.send(`Welcome to Dashboard ${req.session.user.uname}!`);
+		res.send({
+			message: `Welcome to Dashboard ${req.session.user.uname}!`
+		});
 	} catch (err) {
 		console.log(err.stack);
 		res.status(500).send({ message: err.message, stack: err.stack });
@@ -65,9 +73,9 @@ app.use('/cart', authCustomer, cart);
 
 app.get('/signout', auth, (req, res) => {
 	req.session.destroy();
-	res.send('Signed Out!');
+	res.send({ message: 'Signed Out!' });
 });
 
 app.use((req, res) => {
-	res.status(404).send('Page not found');
+	res.status(404).send({ message: 'Page not found' });
 });

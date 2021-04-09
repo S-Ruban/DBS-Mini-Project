@@ -23,22 +23,46 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
+	const client = await pool.connect();
 	try {
-		const cart = await pool.query(
+		await client.query('BEGIN');
+		const cart = await client.query(
 			'SELECT * FROM ORDERS WHERE Cust_Uname = $1 AND isPlaced = $2',
 			[req.session.user.uname, false]
 		);
 		if (cart.rowCount) res.status(406).send({ message: 'Cart is Empty' });
 		else {
-			const order = await pool.query(
+			const order = await client.query(
 				'UPDATE ORDERS SET isPlaced = $1, OrderTime = $2 WHERE OrderNo = $3 RETURNING *',
 				[true, new Date().getTime(), cart.rows[0].orderno]
 			);
+
+			const customer = await client.query(
+				'SELECT lat as latitutde, long as longitude FROM CUSTOMERS WHERE Cust_Uname = $1',
+				[cart.rows[0].cust_uname]
+			);
+			const restaurant = await client.query(
+				'SELECT lat as latitude, long as longitude FROM RESTAURANTS WHERE FSSAI = $1',
+				[cart.rows[0].fssai]
+			);
+			await req.app.get('workerUtils').addJob(
+				'assignDelivery',
+				{
+					orderNo: cart.rows[0].orderno,
+					cust_loc: customer.rows[0],
+					rest_loc: restaurant.rows[0]
+				},
+				{ maxAttemps: 5 }
+			);
+			await client.query('COMMIT');
 			res.status(201).send(order.rows[0]);
 		}
 	} catch (err) {
+		await client.query('ROLLBACK');
 		console.log(err.stack);
 		res.status(500).send({ message: err.message, stack: err.stack });
+	} finally {
+		client.release();
 	}
 });
 

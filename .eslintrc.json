@@ -12,6 +12,7 @@
 		"no-plusplus": "off",
 		"one-var": "off",
 		"operator-linebreak": ["error", "after"],
-		"object-curly-newline": ["error", { "consistent": true }]
+		"object-curly-newline": ["error", { "consistent": true }],
+		"implicit-arrow-linebreak": "off"
 	}
 }
