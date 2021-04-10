@@ -14,21 +14,18 @@ router.get('/', async (req, res) => {
 		result.user = user.rows[0];
 		result.type = req.session.user.type;
 		if (req.session.user.type === 'customer') {
-			const customer = await pool.query(
-				'SELECT * FROM CUSTOMERS WHERE Cust_Uname = $1',
-				[req.session.user.uname]
-			);
+			const customer = await pool.query('SELECT * FROM CUSTOMERS WHERE Cust_Uname = $1', [
+				req.session.user.uname
+			]);
 			result.customer = customer.rows[0];
 		} else if (req.session.user.type === 'restaurant') {
-			const restaurant = await pool.query(
-				'SELECT * FROM RESTAURANTS WHERE Rest_Uname = $1',
-				[req.session.user.uname]
-			);
+			const restaurant = await pool.query('SELECT * FROM RESTAURANTS WHERE Rest_Uname = $1', [
+				req.session.user.uname
+			]);
 			result.restaurant = restaurant.rows[0];
-			const phones = await pool.query(
-				'SELECT * FROM RESTAURANT_PHONE WHERE FSSAI = $1',
-				[restaurant.rows[0].fssai]
-			);
+			const phones = await pool.query('SELECT * FROM RESTAURANT_PHONE WHERE FSSAI = $1', [
+				restaurant.rows[0].fssai
+			]);
 			result.phones = phones.rows;
 		} else {
 			const delivery = await pool.query(
@@ -51,27 +48,34 @@ router.patch('/', async (req, res) => {
 		const patch = req.body;
 
 		if (patch.changepass) {
-			const credentials = await pool.query(
-				'SELECT * FROM USERS WHERE Uname = $1',
-				[req.session.user.uname]
-			);
-			if (
-				bcrypt.compareSync(
-					patch.changepass.old,
-					credentials.rows[0].pass
-				)
-			) {
-				await pool.query(
-					'UPDATE USERS SET PASS = $1 WHERE Uname = $2',
-					[
-						bcrypt.hashSync(patch.changepass.new, 12),
-						req.session.user.uname
-					]
-				);
+			const credentials = await pool.query('SELECT * FROM USERS WHERE Uname = $1', [
+				req.session.user.uname
+			]);
+			if (bcrypt.compareSync(patch.changepass.old, credentials.rows[0].pass)) {
+				await pool.query('UPDATE USERS SET PASS = $1 WHERE Uname = $2', [
+					bcrypt.hashSync(patch.changepass.new, 12),
+					req.session.user.uname
+				]);
 			} else {
 				res.send({ message: 'Wrong Old Password' });
-				return;
 			}
+			delete patch.changepass;
+		}
+
+		if (req.session.user.type === 'restaurant' && patch.hasOwnPropert('isopen')) {
+			await pool.query('UPDATE RESTAURANTS SET isOpen = $1 WHERE Rest_Uname = $2', [
+				patch.isopen,
+				req.session.user.uname
+			]);
+			req.app.get('io').emit('restaurantOpen', patch.isopen);
+			delete patch.isopen;
+		} else if (req.session.user.type === 'delivery' && patch.hasOwnPropert('isavail')) {
+			await pool.query('UPDATE DELIVERY_PERSONS SET isAvail = $1 WHERE Del_Uname = $2', [
+				patch.isAvail,
+				req.session.user.uname
+			]);
+			req.app.get('io').emit('deliveryAvail', patch.isAvail);
+			delete patch.isAvail;
 		}
 
 		let updatedUser = null;

@@ -1,12 +1,27 @@
 const { makeWorkerUtils, run } = require('graphile-worker');
 const { getDistance: distance } = require('geolib');
 const pool = require('./Models/dbConfig');
+const { getSocketID } = require('./socket');
+const { getRestUname } = require('./Models/helpers');
+
+let app;
 
 const assignDelivery = async (payload) => {
-	const res = await pool.query(
-		'SELECT Del_Uname, lat, long FROM DELIVERY_PERSONS WHERE isAvail = $1',
-		[true]
-	);
+	let res;
+	if (payload.rejectedBy.length) {
+		res = await pool.query(
+			`
+			SELECT Del_Uname, lat, long FROM DELIVERY_PERSONS WHERE isAvail = $1 AND 
+			Del_Uname NOT IN (${payload.rejectedBy.join(',')})
+			`,
+			[true]
+		);
+	} else {
+		res = await pool.query(
+			'SELECT Del_Uname, lat, long FROM DELIVERY_PERSONS WHERE isAvail = $1',
+			[true]
+		);
+	}
 	const delPersons = res.rows;
 
 	delPersons.filter(
@@ -21,26 +36,28 @@ const assignDelivery = async (payload) => {
 			dist = 20000;
 		delPersons.forEach((e) => {
 			const d =
-				distance(
-					{ latitude: e.lat, longitude: e.long },
-					payload.rest_loc
-				) + distance(payload.rest_loc, payload.cust_loc);
+				distance({ latitude: e.lat, longitude: e.long }, payload.rest_loc) +
+				distance(payload.rest_loc, payload.cust_loc);
 			if (d < min) {
 				min = e;
 				dist = d;
 			}
 		});
 		const delCharge = Math.round(Math.max(5, 0.003 * dist));
-		await pool.query(
-			'UPDATE ORDERS SET isAssigned = $1, Del_Uname = $2, Del_Charge = $3 WHERE OrderNo = $4',
-			[true, min.del_uname, delCharge, payload.orderNo]
-		);
+		if (getSocketID(min.del_uname)) {
+			app.get('io').to(getSocketID(min.del_uname)).emit('deliveryQuery', {
+				delUname: min.del_uname,
+				delCharge,
+				payload
+			});
+		} else throw new Error('Delivery person not connected');
 	}
 	throw new Error('No delivery person nearby!');
 };
 
-const newWorkerUtils = async () => {
+const newWorkerUtils = async (appReceived) => {
 	try {
+		app = appReceived;
 		const workerUtils = await makeWorkerUtils({
 			pgPool: pool
 		});
@@ -57,8 +74,16 @@ const newRunner = async () => {
 		pgPool: pool,
 		taskList: { assignDelivery }
 	});
-	runner.events.on('job:failed', ({ job }) => {
-		console.log(`Order ${job.payload.orderNo} failed!`);
+	runner.events.on('job:failed', async ({ job }) => {
+		const order = await pool.query('SELECT * FROM ORDERS WHERE OrderNo = $1', [
+			job.payload.orderNo
+		]);
+		const { cust_uname, fssai } = order.rows[0];
+		const rest_uname = await getRestUname(fssai);
+		if (getSocketID(cust_uname))
+			io.to(getSocketID(cust_uname)).emit('delFailed', order.rows[0]);
+		if (getSocketID(rest_uname))
+			io.to(getSocketID(rest_uname)).emit('delFailed', order.rows[0]);
 	});
 };
 

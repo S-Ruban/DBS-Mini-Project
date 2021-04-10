@@ -1,10 +1,7 @@
 const express = require('express');
 const pool = require('../Models/dbConfig');
-const {
-	getRestUname,
-	getFSSAI,
-	getSetStatement
-} = require('../Models/helpers');
+const { getRestUname, getFSSAI } = require('../Models/helpers');
+const { getSocketID } = require('../socket');
 
 const router = express.Router();
 
@@ -68,25 +65,22 @@ router.get('/:order_no', async (req, res) => {
 			'SELECT * FROM ORDERS WHERE OrderNo = $1 AND isPlaced = $2',
 			[req.params.order_no, true]
 		);
-		if (!order.rowCount)
-			res.status(404).send({ message: 'Order does not exist' });
+		if (!order.rowCount) res.status(404).send({ message: 'Order does not exist' });
 		else if (
 			(req.session.user.type === 'customer' &&
 				req.session.user.uname === order.rows[0].cust_uname) ||
 			(req.session.user.type === 'delivery' &&
 				req.session.user.uname === order.rows[0].del_uname) ||
 			(req.session.user.type === 'restaurant' &&
-				req.session.user.uname ===
-					(await getRestUname(order.rows[0].fssai)))
+				req.session.user.uname === (await getRestUname(order.rows[0].fssai)))
 		) {
 			const customer = await pool.query(
 				'SELECT * FROM USERS, CUSTOMERS WHERE Cust_Uname = $1 AND Cust_Uname = Uname',
 				[order.rows[0].cust_uname]
 			);
-			const restaurant = await pool.query(
-				'SELECT * FROM RESTAURANTS WHERE FSSAI = $1',
-				[order.rows[0].fssai]
-			);
+			const restaurant = await pool.query('SELECT * FROM RESTAURANTS WHERE FSSAI = $1', [
+				order.rows[0].fssai
+			]);
 			const delivery = await pool.query(
 				'SELECT * FROM USERS, DELIVERY_PERSONS WHERE Del_Uname = $1 AND Del_Uname = Uname',
 				[order.rows[0].del_uname]
@@ -118,16 +112,13 @@ router.delete('/:order_no', async (req, res) => {
 			'SELECT * FROM ORDERS WHERE OrderNo = $1 AND isPlaced = $2',
 			[req.params.order_no, true]
 		);
-		if (!order.rowCount)
-			res.status(404).send({ message: 'Order does not exist' });
+		if (!order.rowCount) res.status(404).send({ message: 'Order does not exist' });
 		else if (order.rows[0].isPrepared) {
 			res.status(403).send({
 				message: 'Cannot cancel order after prepared.'
 			});
 		} else {
-			await pool.query('DELETE FROM ORDERS WHERE OrderNo = $1', [
-				req.params.order_no
-			]);
+			await pool.query('DELETE FROM ORDERS WHERE OrderNo = $1', [req.params.order_no]);
 			res.send({ message: 'Cancelled Order!' });
 		}
 	} catch (err) {
@@ -138,26 +129,48 @@ router.delete('/:order_no', async (req, res) => {
 
 router.patch('/:order_no', async (req, res) => {
 	try {
-		let order = await pool.query(
-			'SELECT * FROM ORDERS WHERE OrderNo = $1 AND isPlaced = $2',
-			[req.params.order_no, true]
-		);
-		if (!order.rowCount)
-			res.status(404).send({ message: 'Order does not exist' });
+		let order = await pool.query('SELECT * FROM ORDERS WHERE OrderNo = $1 AND isPlaced = $2', [
+			req.params.order_no,
+			true
+		]);
+		if (!order.rowCount) res.status(404).send({ message: 'Order does not exist' });
 		else if (
 			(req.session.user.type === 'customer' &&
 				req.session.user.uname === order.rows[0].cust_uname) ||
 			(req.session.user.type === 'delivery' &&
 				req.session.user.uname === order.rows[0].del_uname) ||
 			(req.session.user.type === 'restaurant' &&
-				req.session.user.uname ===
-					(await getRestUname(order.rows[0].fssai)))
+				req.session.user.uname === (await getRestUname(order.rows[0].fssai)))
 		) {
-			const setOrderStatement = getSetStatement(req.body);
-			order = await pool.query(
-				`UPDATE ORDERS ${setOrderStatement.query} WHERE OrderNo = $${setOrderStatement.nextIndex} RETURNING *`,
-				setOrderStatement.params.concat([req.params.order_no])
-			);
+			const rest_uname = await getRestUname(order.rows[0].fssai);
+			let eventType = null,
+				columnType = null;
+			if (req.body.isPrepared) {
+				eventType = 'prepared';
+				columnType = 'isPrepared';
+			} else if (req.body.isReceived) {
+				eventType = 'received';
+				columnType = 'isReceived';
+			} else if (req.body.isDelivered) {
+				eventType = 'delivered';
+				columnType = 'isDelivered';
+			} else if (req.body.isPaid) {
+				eventType = 'paid';
+				columnType = 'isPaid';
+			}
+
+			order = await pool.query(`UPDATE ORDERS SET ${columnType} = $1 WHERE OrderNo = $2`, [
+				true,
+				req.params.order_no
+			]);
+
+			if (getSocketID(order.rows[0].cust_uname))
+				req.app.get('io').to(getSocketID(order.rows[0].cust_uname)).emit(eventType, true);
+			if (getSocketID(rest_uname))
+				req.app.get('io').to(getSocketID(rest_uname)).emit(eventType, true);
+			if (getSocketID(order.rows[0].del_uname))
+				req.app.get('io').to(getSocketID(order.rows[0].del_uname)).emit(eventType, true);
+
 			res.send(order.rows[0]);
 		} else res.status(403).send({ message: 'Unauthorized' });
 	} catch (err) {

@@ -74,10 +74,10 @@ router.use(async (req, res, next) => {
 
 router.get('/:item_no', async (req, res) => {
 	try {
-		const item = await pool.query(
-			'SELECT * FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2',
-			[fssai, req.params.item_no]
-		);
+		const item = await pool.query('SELECT * FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2', [
+			fssai,
+			req.params.item_no
+		]);
 		if (item.rowCount) res.send(item.rows[0]);
 		else res.status(404).send({ message: 'Item Not Found' });
 	} catch (err) {
@@ -88,10 +88,9 @@ router.get('/:item_no', async (req, res) => {
 
 router.post('/', async (req, res) => {
 	try {
-		let result = await pool.query(
-			'SELECT COUNT(*) AS Count FROM FOOD_ITEMS WHERE FSSAI = $1',
-			[fssai]
-		);
+		let result = await pool.query('SELECT COUNT(*) AS Count FROM FOOD_ITEMS WHERE FSSAI = $1', [
+			fssai
+		]);
 		result = await pool.query(
 			'INSERT INTO FOOD_ITEMS VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
 			[
@@ -116,11 +115,20 @@ router.post('/', async (req, res) => {
 
 router.patch('/:item_no', async (req, res) => {
 	try {
-		let item = await pool.query(
-			'SELECT * FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2',
-			[fssai, req.params.item_no]
-		);
+		let item = await pool.query('SELECT * FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2', [
+			fssai,
+			req.params.item_no
+		]);
 		if (item.rowCount) {
+			if (req.body.hasOwnProperty('isavail')) {
+				await pool.query(
+					'UPDATE FOOD_ITEMS SET isAvail = $1 WHERE FSSAI = $2 AND ItemNo = $3',
+					[req.body.isavail, fssai, req.params.item_no]
+				);
+				req.app.get('io').emit('itemAvail', req.body.isavail);
+				delete req.body.isavail;
+			}
+
 			const setItemStatement = getSetStatement(req.body);
 			item = await pool.query(
 				`
@@ -140,10 +148,10 @@ router.patch('/:item_no', async (req, res) => {
 
 router.delete('/item_no', async (req, res) => {
 	try {
-		const result = await pool.query(
-			'DELETE FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2',
-			[fssai, req.params.item_no]
-		);
+		const result = await pool.query('DELETE FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2', [
+			fssai,
+			req.params.item_no
+		]);
 		if (result.rowCount) res.send({ message: 'Item Deleted!' });
 		else res.status(404).send({ message: 'Item not found' });
 	} catch (err) {

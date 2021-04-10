@@ -50,7 +50,8 @@ router.post('/', async (req, res) => {
 				{
 					orderNo: cart.rows[0].orderno,
 					cust_loc: customer.rows[0],
-					rest_loc: restaurant.rows[0]
+					rest_loc: restaurant.rows[0],
+					rejectedBy: []
 				},
 				{ maxAttemps: 5 }
 			);
@@ -68,10 +69,10 @@ router.post('/', async (req, res) => {
 
 router.delete('/', async (req, res) => {
 	try {
-		await pool.query(
-			'DELETE FROM ORDERS WHERE Cust_Uname = $1 AND isPlaced = $2',
-			[req.session.user.uname, false]
-		);
+		await pool.query('DELETE FROM ORDERS WHERE Cust_Uname = $1 AND isPlaced = $2', [
+			req.session.user.uname,
+			false
+		]);
 		res.send({ message: 'Cart emptied' });
 	} catch (err) {
 		console.log(err.stack);
@@ -81,10 +82,10 @@ router.delete('/', async (req, res) => {
 
 let cart;
 router.use(async (req, res, next) => {
-	cart = await pool.query(
-		'SELECT * FROM ORDERS WHERE Cust_Uname = $1 AND isPlaced = $2',
-		[req.session.user.uname, false]
-	);
+	cart = await pool.query('SELECT * FROM ORDERS WHERE Cust_Uname = $1 AND isPlaced = $2', [
+		req.session.user.uname,
+		false
+	]);
 	next();
 });
 
@@ -161,12 +162,7 @@ router.patch('/:item_no', async (req, res) => {
 		else {
 			const item = await pool.query(
 				'UPDATE ORDER_CONTENTS SET Quantity = $1 WHERE OrderNo = $2 AND ItemNo = $3 AND FSSAI = $4 RETURNING *',
-				[
-					req.body.quantity,
-					cart.rows[0].orderno,
-					req.params.item_no,
-					req.body.fssai
-				]
+				[req.body.quantity, cart.rows[0].orderno, req.params.item_no, req.body.fssai]
 			);
 			if (item.rowCount) res.send(item.rows[0]);
 			else res.status(404).send({ message: 'Item does not exist' });
