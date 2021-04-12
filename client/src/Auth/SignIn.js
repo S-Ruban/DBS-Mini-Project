@@ -1,10 +1,11 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import { makeStyles } from '@material-ui/core/styles';
 import { Grid, Avatar, Button, Link, TextField, Typography } from '@material-ui/core';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
-import UserContext from '../UserContext';
+import { signin } from '../Redux/userSlice';
 
 const useStyles = makeStyles((theme) => ({
 	paper: {
@@ -38,16 +39,21 @@ const SignIn = () => {
 
 	const [uname, setUname] = useState('');
 	const [pass, setPass] = useState('');
-	const { setUser } = useContext(UserContext);
+	const [error, setError] = useState(false);
+	const dispatch = useDispatch();
 	const history = useHistory();
 
 	const submitHandler = async (e) => {
 		e.preventDefault();
-		const credentials = { uname, pass };
-		const res = await axios.post('http://localhost:5000/signin', credentials);
-		if (res.status === 202) {
-			setUser(res.data.user);
+		let res;
+		try {
+			const credentials = { uname, pass };
+			res = await axios.post('/signin', credentials);
+			dispatch(signin(res.data));
 			history.push('/dashboard');
+		} catch (err) {
+			if (err.response.status === 401) setError(true);
+			console.log(err.response.data.message);
 		}
 	};
 
@@ -74,7 +80,9 @@ const SignIn = () => {
 								fullWidth
 								onChange={(e) => {
 									setUname(e.target.value);
+									setError(false);
 								}}
+								error={error}
 							/>
 						</Grid>
 						<Grid item className={classes.formElement}>
@@ -86,7 +94,9 @@ const SignIn = () => {
 								fullWidth
 								onChange={(e) => {
 									setPass(e.target.value);
+									setError(false);
 								}}
+								error={error}
 							/>
 						</Grid>
 						<Grid item className={classes.formElement}>

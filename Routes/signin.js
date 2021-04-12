@@ -46,8 +46,8 @@ router.post('/', async (req, res) => {
 					credentials.uname
 				]);
 			}
-			res.status(202).send(req.session);
-		} else res.status(401).send('Invalid Username or Password');
+			res.status(202).send(req.session.user);
+		} else res.status(401).send({ message: 'Invalid Username or Password' });
 	} catch (err) {
 		console.log(err.stack);
 		res.status(500).send({ message: err.message, stack: err.stack });

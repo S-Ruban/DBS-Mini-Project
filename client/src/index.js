@@ -1,11 +1,28 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Provider } from 'react-redux';
+import axios from 'axios';
 import './index.css';
 import App from './App';
+import store from './Redux/store';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+const checkSignedIn = async () => {
+	const res = await axios.get('/session');
+	const user = res.data.user;
+	let preloadedState = {};
+	if (user) preloadedState = { user };
+	return preloadedState;
+};
+
+const renderApp = (preloadedState) => {
+	ReactDOM.render(
+		<React.StrictMode>
+			<Provider store={store(preloadedState)}>
+				<App />
+			</Provider>
+		</React.StrictMode>,
+		document.getElementById('root')
+	);
+};
+
+(async () => renderApp(await checkSignedIn()))();

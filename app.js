@@ -22,7 +22,7 @@ const ratings = require('./Routes/ratings');
 const app = express();
 app.use(helmet());
 app.use(morgan('dev'));
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 const server = http.createServer(app);
 server.listen(process.env.SERVER_PORT, () => {
 	console.log(`Listening on port ${process.env.SERVER_PORT}`);
@@ -53,7 +53,6 @@ app.use(async (req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-	console.log('HERE');
 	if (req.session && req.session.user)
 		res.send({ endpoint: '/dashboard', user: req.session.user });
 	else res.send({ endpoint: '/signin' });
@@ -82,6 +81,11 @@ app.get('/signout', auth, async (req, res) => {
 	}
 	req.session.destroy();
 	res.send({ message: 'Signed Out!' });
+});
+
+app.get('/session', (req, res) => {
+	console.log(req.session);
+	res.send({ user: req.session.user });
 });
 
 app.use((req, res) => {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useHistory } from 'react-router';
 import axios from 'axios';
 import { makeStyles } from '@material-ui/core/styles';
 import { Grid, Button, TextField, Typography } from '@material-ui/core';
@@ -56,6 +57,8 @@ const RestReg = () => {
 	const [phones, setPhones] = useState([]);
 	const [newPhone, setNewPhone] = useState('');
 
+	const history = useHistory();
+
 	const submitHandler = async (e) => {
 		e.preventDefault();
 		if (pass !== confirm) {
@@ -83,7 +86,9 @@ const RestReg = () => {
 				phones
 			};
 			const res = await axios.post('http://localhost:5000/signup', details);
-			console.log(res);
+			if (res.statusText === 'OK') {
+				history.push('/signin');
+			} else console.log(res.data.message);
 		}
 	};
 

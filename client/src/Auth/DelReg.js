@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useHistory } from 'react-router';
 import axios from 'axios';
 import { makeStyles } from '@material-ui/core/styles';
 import { Grid, Button, TextField, Typography } from '@material-ui/core';
@@ -46,6 +47,8 @@ const CustReg = () => {
 	const [vcolour, setVcolour] = useState('');
 	const [vmodel, setVmodel] = useState('');
 
+	const history = useHistory();
+
 	const submitHandler = async (e) => {
 		e.preventDefault();
 		if (pass !== confirm) {
@@ -66,7 +69,9 @@ const CustReg = () => {
 				vcolour
 			};
 			const res = await axios.post('http://localhost:5000/signup', details);
-			console.log(res);
+			if (res.statusText === 'OK') {
+				history.push('/signin');
+			} else console.log(res.data.message);
 		}
 	};
 
