@@ -6,10 +6,25 @@ const users = new Map();
 let app;
 
 const accept = async (details) => {
-	const order = await pool.query(
-		'UPDATE ORDERS SET isAssigned = $1, Del_Uname = $2, Del_Charge = $3 WHERE OrderNo = $4 RETURNING *',
-		[true, details.delUname, details.delCharge, details.payload.orderNo]
-	);
+	const client = await pool.connect();
+
+	try {
+		await client.query('BEGIN');
+		const order = await client.query(
+			'UPDATE ORDERS SET isAssigned = $1, Del_Uname = $2, Del_Charge = $3 WHERE OrderNo = $4 RETURNING *',
+			[true, details.delUname, details.delCharge, details.payload.orderNo]
+		);
+		await client.query('UPDATE DELIVERY_PERSONS SET isAvail = $1 WHERE Del_Uname = $2', [
+			false,
+			details.delUname
+		]);
+	} catch (err) {
+		client.query('ROLLBACK');
+		console.log(err.stack);
+		res.status(500).send({ stack: err.stack, message: err.message });
+	} finally {
+		client.release();
+	}
 	return order.rows[0];
 };
 

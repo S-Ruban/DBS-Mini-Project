@@ -7,10 +7,9 @@ const router = express.Router();
 router.get('/', async (req, res) => {
 	try {
 		if (req.query.uname) {
-			const users = await pool.query(
-				'SELECT * FROM USERS WHERE UNAME = $1',
-				[req.query.uname]
-			);
+			const users = await pool.query('SELECT * FROM USERS WHERE UNAME = $1', [
+				req.query.uname
+			]);
 			res.send({ isTaken: users.rowCount });
 		} else res.send({ message: 'Sign Up Page' });
 	} catch (err) {
@@ -28,14 +27,7 @@ router.post('/', async (req, res) => {
 		const result = {};
 		const newUser = await client.query(
 			'INSERT INTO USERS VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-			[
-				user.uname,
-				user.pass,
-				user.firstname,
-				user.lastname,
-				user.phone,
-				user.email
-			]
+			[user.uname, user.pass, user.firstname, user.lastname, user.phone, user.email]
 		);
 		result.user = newUser.rows;
 
@@ -59,7 +51,7 @@ router.post('/', async (req, res) => {
 					user.pin,
 					user.lat,
 					user.long,
-					user.isopen
+					false
 				]
 			);
 			result.restaurant = restaurant.rows;

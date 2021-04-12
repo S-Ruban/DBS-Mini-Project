@@ -53,19 +53,10 @@ app.use(async (req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-	if (req.session && req.session.user) res.redirect('/dashboard');
-	else res.redirect('/signin');
-});
-
-app.get('/dashboard', auth, (req, res) => {
-	try {
-		res.send({
-			message: `Welcome to Dashboard ${req.session.user.uname}!`
-		});
-	} catch (err) {
-		console.log(err.stack);
-		res.status(500).send({ message: err.message, stack: err.stack });
-	}
+	console.log('HERE');
+	if (req.session && req.session.user)
+		res.send({ endpoint: '/dashboard', user: req.session.user });
+	else res.send({ endpoint: '/signin' });
 });
 
 app.use('/signin', unauth, signin);

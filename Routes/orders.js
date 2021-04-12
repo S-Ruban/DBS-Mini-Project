@@ -163,6 +163,12 @@ router.patch('/:order_no', async (req, res) => {
 				true,
 				req.params.order_no
 			]);
+			if (req.body.isDelivered) {
+				await pool.query('UPDATE DELIVERY_PERSONS SET isAvail = $1 WHERE Del_Uname = $2', [
+					true,
+					order.rows[0].del_uname
+				]);
+			}
 
 			if (getSocketID(order.rows[0].cust_uname))
 				req.app.get('io').to(getSocketID(order.rows[0].cust_uname)).emit(eventType, true);
