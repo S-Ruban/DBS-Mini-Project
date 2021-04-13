@@ -167,9 +167,14 @@ const Layout = ({ children }) => {
 							<Menu
 								anchorEl={anchorEl}
 								keepMounted
+								getContentAnchorEl={null}
 								anchorOrigin={{
+									vertical: 'bottom',
+									horizontal: 'center'
+								}}
+								transformOrigin={{
 									vertical: 'top',
-									horizontal: 'right'
+									horizontal: 'center'
 								}}
 								open={Boolean(anchorEl)}
 								onClose={handleClose}

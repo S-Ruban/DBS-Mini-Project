@@ -89,7 +89,6 @@ app.post('/signout', auth, async (req, res) => {
 });
 
 app.get('/session', (req, res) => {
-	console.log(req.session);
 	res.send({ user: req.session.user });
 });
 

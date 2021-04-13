@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { createMuiTheme, ThemeProvider } from '@material-ui/core';
 import './App.css';
 import { Auth, UnAuth } from './routes';
 import SignIn from './Components/Auth/SignIn';
@@ -9,7 +10,10 @@ import CustDashboard from './Components/Dashboards/CustDashboard';
 import RestDashboard from './Components/Dashboards/RestDashboard';
 import DelDashboard from './Components/Dashboards/DelDashboard';
 import Layout from './Components/Layout';
-import { createMuiTheme, ThemeProvider } from '@material-ui/core';
+import ItemCard from './Components/Cards/ItemCard';
+import RestaurantCard from './Components/Cards/RestaurantCard';
+import CartContentCard from './Components/Cards/CartContentCard';
+import OrderCard from './Components/Cards/OrderCard';
 
 const theme = createMuiTheme({
 	typography: {
@@ -44,6 +48,12 @@ function App() {
 							{user.type === 'restaurant' && <RestDashboard />}
 							{user.type === 'delivery' && <DelDashboard />}
 						</Auth>
+						<Route exact path='/element'>
+							<RestaurantCard />
+							<ItemCard type='restaurant' />
+							<CartContentCard initQuantity={5} />
+							<OrderCard />
+						</Route>
 					</Switch>
 				</Layout>
 			</Router>
