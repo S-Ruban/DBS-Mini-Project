@@ -67,20 +67,25 @@ app.use('/restaurants', authCustomer, restaurants);
 app.use('/cart', authCustomer, cart);
 app.use('/ratings', auth, ratings);
 
-app.get('/signout', auth, async (req, res) => {
-	if (req.session.user.type === 'restaurant') {
-		await pool.query('UPDATE RESTAURANTS SET isOpen = $1 WHERE Rest_Uname = $2', [
-			false,
-			req.session.user.uname
-		]);
-	} else if (req.session.user.type === 'delivery') {
-		await pool.query('UPDATE DELIVERY_PERSONS SET isAvai = $1 WHERE Del_Uname = $2', [
-			false,
-			req.session.user.uname
-		]);
+app.post('/signout', auth, async (req, res) => {
+	try {
+		if (req.session.user.type === 'restaurant') {
+			await pool.query('UPDATE RESTAURANTS SET isOpen = $1 WHERE Rest_Uname = $2', [
+				false,
+				req.session.user.uname
+			]);
+		} else if (req.session.user.type === 'delivery') {
+			await pool.query('UPDATE DELIVERY_PERSONS SET isAvai = $1 WHERE Del_Uname = $2', [
+				false,
+				req.session.user.uname
+			]);
+		}
+		req.session.destroy();
+		res.send({ message: 'Signed Out!' });
+	} catch (err) {
+		console.log(err.stack);
+		res.status(500).send({ stack: err.stack, message: err.message });
 	}
-	req.session.destroy();
-	res.send({ message: 'Signed Out!' });
 });
 
 app.get('/session', (req, res) => {
