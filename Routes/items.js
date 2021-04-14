@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
 				query += ` AND ItemName ILIKE $${++varcount}`;
 				params.push(`%${req.query.name}%`);
 			}
-			if (req.query.veg) {
+			if (req.query.veg === 'true') {
 				query += ` AND IsVeg = $${++varcount}`;
 				params.push(req.query.veg);
 			}
@@ -41,20 +41,21 @@ router.get('/', async (req, res) => {
 				query += ` AND Price <= $${++varcount}`;
 				params.push(req.query.maxPrice);
 			}
-			if (req.body.cuisines && req.body.cuisines.length) {
+			if (req.query.cuisines && req.query.cuisines.length) {
 				const cuisinecount = [];
-				for (let i = 0; i < req.body.cuisines.length; i++)
+				for (let i = 0; i < req.query.cuisines.length; i++)
 					cuisinecount.push(`$${++varcount}`);
 				query += ` AND Cuisine IN (${cuisinecount.join(',')})`;
-				params.concat(req.body.cuisine);
+				params = params.concat(req.query.cuisines);
 			}
-			if (req.body.mealtypes && req.body.mealtypes.length) {
+			if (req.query.mealTypes && req.query.mealTypes.length) {
 				const mealtypecount = [];
-				for (let i = 0; i < req.body.mealtypes.length; i++)
+				for (let i = 0; i < req.query.mealTypes.length; i++)
 					mealtypecount.push(`$${++varcount}`);
 				query += ` AND Mealtype IN (${mealtypecount.join(',')})`;
-				params.concat(req.body.mealtype);
+				params = params.concat(req.query.mealTypes);
 			}
+			console.log(query, params);
 			const items = await pool.query(query, params);
 			res.send(items.rows);
 		} else res.status(403).send({ message: 'Unauthorized' });

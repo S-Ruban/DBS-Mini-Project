@@ -10,7 +10,7 @@ import {
 	Typography
 } from '@material-ui/core';
 import Image from 'material-ui-image';
-import restaurantImage from '../../images/restaurant.jpg';
+import restaurantImage from '../../Images/restaurant.jpg';
 
 const useStyles = makeStyles((theme) => ({
 	root: {

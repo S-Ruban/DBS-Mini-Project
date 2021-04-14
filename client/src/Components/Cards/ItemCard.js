@@ -16,7 +16,7 @@ import {
 } from '@material-ui/core';
 import Image from 'material-ui-image';
 import AddIcon from '@material-ui/icons/Add';
-import ItemImage from '../../images/foodItem.jpg';
+import ItemImage from '../../Images/foodItem.jpg';
 
 const useStyles = makeStyles((theme) => ({
 	root: {

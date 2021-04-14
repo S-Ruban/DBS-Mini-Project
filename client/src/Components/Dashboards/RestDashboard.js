@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import {
 	Tabs,
 	Tab,
@@ -41,11 +42,12 @@ const RestDashboard = () => {
 	const [value, setValue] = useState(0);
 	const [items, setItems] = useState([]);
 	const [pending, setPending] = useState([]);
+	const filters = useSelector((state) => state.var.filters);
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const res = await axios.get('/items');
+				const res = await axios.get('/items', { params: filters });
 				setItems(res.data);
 				const orders = await axios.get('/orders', { params: { pending: true } });
 				setPending(orders.data);
@@ -55,7 +57,7 @@ const RestDashboard = () => {
 		};
 
 		fetchData();
-	}, []);
+	}, [filters]);
 
 	const ItemsTab = () => {
 		return (

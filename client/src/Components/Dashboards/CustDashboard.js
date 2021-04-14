@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Accordion, AccordionDetails, AccordionSummary, Grid, Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import axios from 'axios';
@@ -16,24 +17,29 @@ const CustDashboard = () => {
 	const classes = useStyles();
 	const [restaurants, setRestaurants] = useState([]);
 	const [items, setItems] = useState([]);
+	const filters = useSelector((state) => state.var.filters);
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				let res = await axios.get('/restaurants');
+				let res = await axios.get('/restaurants', {
+					params: filters
+				});
 				setRestaurants(res.data);
-				res = await axios.get('/items');
+				res = await axios.get('/items', {
+					params: filters
+				});
 				setItems(res.data);
 			} catch (err) {
 				console.log(err.response.data.message);
 			}
 		};
 		fetchData();
-	}, []);
+	}, [filters]);
 
 	return (
-		<Grid container direction='column' justify='flex-start'>
-			<Grid item className={classes.item}>
+		<Grid container justify='center'>
+			<Grid item className={classes.item} xs={12}>
 				<Accordion defaultExpanded>
 					<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 						<Typography variant='h4'>Restaurants</Typography>
@@ -54,7 +60,7 @@ const CustDashboard = () => {
 					</AccordionDetails>
 				</Accordion>
 			</Grid>
-			<Grid item className={classes.item}>
+			<Grid item className={classes.item} xs={12}>
 				<Accordion defaultExpanded>
 					<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 						<Typography variant='h4'>Items</Typography>

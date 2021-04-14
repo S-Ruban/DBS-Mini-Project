@@ -16,15 +16,18 @@ import {
 	Menu,
 	MenuItem,
 	FormControlLabel,
-	Switch
+	Switch,
+	Button
 } from '@material-ui/core';
 import FastfoodIcon from '@material-ui/icons/Fastfood';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 import SearchIcon from '@material-ui/icons/Search';
 import HistoryIcon from '@material-ui/icons/History';
 import AccountCircle from '@material-ui/icons/AccountCircle';
+import FilterListIcon from '@material-ui/icons/FilterList';
 import { signout } from '../Redux/userSlice';
-import { changeDelAvail } from '../Redux/varSlice';
+import { changeDelAvail, setFilters } from '../Redux/varSlice';
+import FilterDialog from '../Components/Dialogs/FilterDialog';
 
 const useStyles = makeStyles((theme) => {
 	return {
@@ -74,7 +77,7 @@ const useStyles = makeStyles((theme) => {
 			transition: theme.transitions.create('width'),
 			width: '100%',
 			[theme.breakpoints.up('md')]: {
-				width: '50ch'
+				width: '40ch'
 			}
 		},
 		uname: {
@@ -92,7 +95,10 @@ const Layout = ({ children }) => {
 	const user = useSelector((state) => state.user);
 	const cartCount = useSelector((state) => state.cart.count);
 	const delAvail = useSelector((state) => state.var.delAvail);
+	const filters = useSelector((state) => state.var.filters);
 	const [anchorEl, setAnchorEl] = useState(null);
+	const [open, setOpen] = useState(false);
+	const [search, setSearch] = useState('');
 	const dispatch = useDispatch();
 	const history = useHistory();
 
@@ -127,18 +133,37 @@ const Layout = ({ children }) => {
 						</Link>
 					</Typography>
 					{user.uname && user.type !== 'delivery' && (
-						<div className={classes.search}>
-							<div className={classes.searchIcon}>
-								<SearchIcon />
+						<>
+							<div className={classes.search}>
+								<div className={classes.searchIcon}>
+									<SearchIcon />
+								</div>
+								<InputBase
+									placeholder='Type and press enter'
+									classes={{
+										root: classes.inputRoot,
+										input: classes.inputInput
+									}}
+									value={search}
+									onChange={(e) => {
+										setSearch(e.target.value);
+									}}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter')
+											dispatch(setFilters({ ...filters, name: search }));
+									}}
+								/>
 							</div>
-							<InputBase
-								placeholder='Search…'
-								classes={{
-									root: classes.inputRoot,
-									input: classes.inputInput
-								}}
-							/>
-						</div>
+							<Button
+								variant='contained'
+								color='primary'
+								startIcon={<FilterListIcon />}
+								onClick={() => setOpen(true)}
+							>
+								Filters
+							</Button>
+							<FilterDialog onClose={() => setOpen(false)} open={open} />
+						</>
 					)}
 					<div className={classes.grow}></div>
 					{user.type === 'customer' && (

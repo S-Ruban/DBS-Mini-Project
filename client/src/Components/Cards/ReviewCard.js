@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Avatar, Card, CardContent, CardHeader, makeStyles, Typography } from '@material-ui/core';
 import Rating from '@material-ui/lab/Rating';
-import moment from 'moment';
+//import moment from 'moment';
 
 const useStyles = makeStyles((theme) => ({
 	root: {

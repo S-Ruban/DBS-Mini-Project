@@ -24,8 +24,11 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(cors({ origin: true, credentials: true }));
 const server = http.createServer(app);
-server.listen(process.env.SERVER_PORT, () => {
+server.listen(process.env.SERVER_PORT, async () => {
 	console.log(`Listening on port ${process.env.SERVER_PORT}`);
+	app.set('workerUtils', await newWorkerUtils(app));
+	app.set('runner', await newRunner());
+	app.set('io', connect(server, app));
 });
 
 const sessionConfig = {
@@ -45,12 +48,6 @@ const sessionConfig = {
 
 app.use(express.json());
 app.use(session(sessionConfig));
-app.use(async (req, res, next) => {
-	app.set('workerUtils', await newWorkerUtils(app));
-	app.set('runner', await newRunner());
-	app.set('io', connect(server, app));
-	next();
-});
 
 app.get('/', (req, res) => {
 	if (req.session && req.session.user)
