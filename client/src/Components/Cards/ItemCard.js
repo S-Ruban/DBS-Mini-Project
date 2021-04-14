@@ -14,17 +14,17 @@ import {
 	Switch,
 	Typography
 } from '@material-ui/core';
+import Image from 'material-ui-image';
 import AddIcon from '@material-ui/icons/Add';
 import ItemImage from '../../images/foodItem.jpg';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
-		maxWidth: 345,
 		border: true,
 		borderWidth: '3px',
 		borderRadius: 8,
-		borderColor: '#64eb34',
-		margin: theme.spacing(2)
+		margin: theme.spacing(2),
+		flexGrow: 1
 	},
 	media: {
 		height: 0,
@@ -36,10 +36,13 @@ const useStyles = makeStyles((theme) => ({
 	},
 	action: {
 		marginRight: theme.spacing(2)
+	},
+	chip: {
+		marginRight: theme.spacing(1)
 	}
 }));
 
-const RestaurantCard = ({ fssai, item_no, type }) => {
+const RestaurantCard = ({ item, type }) => {
 	const classes = useStyles();
 	const [avail, setAvail] = useState(true);
 
@@ -56,24 +59,31 @@ const RestaurantCard = ({ fssai, item_no, type }) => {
 			variant='outlined'
 			className={classes.root}
 			onClick={clickHandler}
-			style={{ backgroundColor: type === 'customer' || avail ? 'inherit' : '#d3d3d3' }}
+			style={{
+				backgroundColor: type === 'customer' || avail ? 'inherit' : '#d3d3d3',
+				borderColor: item.isveg ? '#26d43a' : '#c41f1f'
+			}}
 		>
 			<CardActionArea>
-				<CardHeader title='Item Name' />
-				<CardMedia className={classes.media} image={ItemImage} title='Food Item Image' />
+				<CardHeader title={item.itemname} titleTypographyProps={{ variant: 'h6' }} />
+				<CardMedia>
+					<Image src={item.img_link ? item.img_link : ItemImage} aspectRatio={3} />
+				</CardMedia>
 				<CardContent>
-					<Grid container justify='space-between' alignItems='center'>
-						<Grid item>
-							<Typography variant='subtitle1'>Item Description</Typography>
+					<Grid container alignItems='center' spacing={2}>
+						<Grid item xs={12}>
+							<Typography variant='subtitle1'>
+								{item.itemdesc ? item.itemdesc : 'No description available'}
+							</Typography>
 						</Grid>
-						<Grid item>
-							<Chip label='Italian' color='secondary' />
+						<Grid item xs={12}>
+							<Chip label={item.cuisine} color='secondary' />
 						</Grid>
 					</Grid>
 				</CardContent>
 			</CardActionArea>
 			<CardActions className={classes.cardAction}>
-				<Typography variant='h4'>&#8377; 69</Typography>
+				<Typography variant='h4'>&#8377; {item.price}</Typography>
 				{type === 'customer' && (
 					<Button
 						variant='contained'

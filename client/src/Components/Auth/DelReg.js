@@ -68,10 +68,12 @@ const CustReg = () => {
 				vmodel,
 				vcolour
 			};
-			const res = await axios.post('http://localhost:5000/signup', details);
-			if (res.statusText === 'OK') {
+			try {
+				await axios.post('http://localhost:5000/signup', details);
 				history.push('/signin');
-			} else console.log(res.data.message);
+			} catch (err) {
+				console.log(err.response.data.message);
+			}
 		}
 	};
 

@@ -9,12 +9,12 @@ router.get('/', async (req, res) => {
 		if (req.session.user.type !== 'delivery') {
 			let query = '',
 				varcount = 0;
-			const params = [];
+			let params = [];
 			if (req.session.user.type === 'customer') {
 				query = `SELECT * FROM FOOD_ITEMS WHERE FSSAI IN (SELECT FSSAI FROM RESTAURANTS WHERE isOpen = $${
 					varcount + 1
 				}) AND isAvail = $${varcount + 2}`;
-				params.concat([true, true]);
+				params = params.concat([true, true]);
 				varcount += 2;
 			} else {
 				query = `SELECT * FROM FOOD_ITEMS WHERE FSSAI = $${++varcount}`;

@@ -13,13 +13,12 @@ router.get('/', async (req, res) => {
 			params.push(`%${req.query.name}%`);
 		}
 		if (req.query.veg) {
-			query += ` AND NOT EXISTS (SELECT * FROM FOOD_ITEMS FI WHERE FI.FSSAI = R.FSSAI AND FI.isVeg = $${++varcount})`;
+			query += ` AND R.isVeg = $${++varcount}`;
 			params.push(false);
 		}
 		if (req.body.cuisines && req.body.cuisines.length) {
 			const cuisinecount = [];
-			for (let i = 0; i < req.body.cuisines.length; i++)
-				cuisinecount.push(`$${++varcount}`);
+			for (let i = 0; i < req.body.cuisines.length; i++) cuisinecount.push(`$${++varcount}`);
 			query += ` AND EXISTS ( SELECT * FROM FOOD_ITEMS FI WHERE FI.FSSAI = R.FSSAI AND FI.Cuisine IN (${cuisinecount.join(
 				','
 			)}))`;
@@ -44,10 +43,9 @@ router.get('/', async (req, res) => {
 
 router.get('/:fssai', async (req, res) => {
 	try {
-		const restaurant = await pool.query(
-			'SELECT * FROM RESTAURANT WHERE FSSAI = $1',
-			[req.params.fssai]
-		);
+		const restaurant = await pool.query('SELECT * FROM RESTAURANT WHERE FSSAI = $1', [
+			req.params.fssai
+		]);
 		if (restaurant.rowCount) res.send(restaurant);
 		else res.status(404).send('Restaurant not found');
 	} catch (err) {

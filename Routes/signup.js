@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
 			result.customer = customer.rows;
 		} else if (user.type === 'restaurant') {
 			const restaurant = await client.query(
-				'INSERT INTO RESTAURANTS VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+				'INSERT INTO RESTAURANTS VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
 				[
 					user.uname,
 					user.fssai,
@@ -51,7 +51,8 @@ router.post('/', async (req, res) => {
 					user.pin,
 					user.lat,
 					user.long,
-					false
+					false,
+					user.isveg
 				]
 			);
 			result.restaurant = restaurant.rows;

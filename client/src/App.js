@@ -10,10 +10,9 @@ import CustDashboard from './Components/Dashboards/CustDashboard';
 import RestDashboard from './Components/Dashboards/RestDashboard';
 import DelDashboard from './Components/Dashboards/DelDashboard';
 import Layout from './Components/Layout';
-import ItemCard from './Components/Cards/ItemCard';
-import RestaurantCard from './Components/Cards/RestaurantCard';
 import CartContentCard from './Components/Cards/CartContentCard';
 import OrderCard from './Components/Cards/OrderCard';
+import ReviewCard from './Components/Cards/ReviewCard';
 
 const theme = createMuiTheme({
 	typography: {
@@ -49,10 +48,9 @@ function App() {
 							{user.type === 'delivery' && <DelDashboard />}
 						</Auth>
 						<Route exact path='/element'>
-							<RestaurantCard />
-							<ItemCard type='restaurant' />
 							<CartContentCard initQuantity={5} />
 							<OrderCard />
+							<ReviewCard />
 						</Route>
 					</Switch>
 				</Layout>

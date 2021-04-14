@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router';
 import axios from 'axios';
@@ -14,7 +14,9 @@ import {
 	Badge,
 	Tooltip,
 	Menu,
-	MenuItem
+	MenuItem,
+	FormControlLabel,
+	Switch
 } from '@material-ui/core';
 import FastfoodIcon from '@material-ui/icons/Fastfood';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
@@ -22,6 +24,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import HistoryIcon from '@material-ui/icons/History';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import { signout } from '../Redux/userSlice';
+import { changeDelAvail } from '../Redux/varSlice';
 
 const useStyles = makeStyles((theme) => {
 	return {
@@ -88,11 +91,10 @@ const Layout = ({ children }) => {
 	const classes = useStyles();
 	const user = useSelector((state) => state.user);
 	const cartCount = useSelector((state) => state.cart.count);
+	const delAvail = useSelector((state) => state.var.delAvail);
 	const [anchorEl, setAnchorEl] = useState(null);
 	const dispatch = useDispatch();
 	const history = useHistory();
-
-	useEffect(() => {}, [cartCount]);
 
 	const handleOpen = (e) => setAnchorEl(e.currentTarget);
 	const handleClose = () => setAnchorEl(null);
@@ -103,6 +105,7 @@ const Layout = ({ children }) => {
 	const handleSignout = async () => {
 		try {
 			await axios.post('/signout');
+			if (user.type === 'delivery') dispatch(changeDelAvail(false));
 			dispatch(signout());
 			history.push('/signin');
 			console.log('Signed Out!');
@@ -147,9 +150,22 @@ const Layout = ({ children }) => {
 							</IconButton>
 						</Tooltip>
 					)}
+					{user.type === 'delivery' && (
+						<FormControlLabel
+							control={
+								<Switch
+									checked={delAvail}
+									onChange={(e) => {
+										dispatch(changeDelAvail(e.target.checked));
+									}}
+								/>
+							}
+							label='Taking Orders?'
+						/>
+					)}
 					{user.uname && (
 						<Typography variant='h6' className={classes.uname}>
-							Nandan H R
+							{user.uname}
 						</Typography>
 					)}
 					{user.uname && (

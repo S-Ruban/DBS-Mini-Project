@@ -71,7 +71,7 @@ const CustReg = () => {
 				pin
 			};
 			const res = await axios.post('http://localhost:5000/signup', details);
-			if (res.statusText === 'OK') {
+			if (res.status === 202) {
 				history.push('/signin');
 			} else console.log(res.data.message);
 		}

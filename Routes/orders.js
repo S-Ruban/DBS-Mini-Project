@@ -23,20 +23,44 @@ router.get('/', async (req, res) => {
 			);
 			res.send(orders.rows);
 		} else if (req.session.user.type === 'restaurant') {
-			const orders = await pool.query(
-				`
-                SELECT OrderNo AS Order_No, OrderTime AS Order_Time, Cust_FirstName AS Customer, Del_FirstName AS Delivery, SUM(Quantity) AS Quantity, (SUM(Quantity*Price) + Del_Charge) AS Price 
-				FROM (((SELECT * FROM ORDERS WHERE FSSAI = $1 AND isPaid = $2) AS RESTAURANT 
-						NATURAL JOIN ORDER_CONTENTS) 
-						NATURAL JOIN FOOD_ITEMS) 
-						NATURAL JOIN (SELECT Uname AS Cust_Uname, FirstName AS Cust_FirstName FROM USERS) AS CUSTOMER_NAMES 
-						NATURAL JOIN (SELECT Uname AS Del_Uname, FirstName AS Del_FirstName FROM USERS) AS DELIVERY_NAMES
-				GROUP BY ( Order_No, Order_Time, Customer, Delivery, Del_Charge)
-				ORDER BY Order_Time DESC;
-                `,
-				[await getFSSAI(req.session.user.uname), true]
-			);
-			res.send(orders.rows);
+			if (req.query.pending) {
+				const orders = await pool.query(
+					`
+					SELECT OrderNo, OrderTime, isPrepared, Cust_FirstName AS Customer
+					FROM (SELECT * FROM ORDERS WHERE FSSAI = $1 AND isDelivered = $2) AS RESTAURANT 
+							NATURAL JOIN (SELECT Uname AS Cust_Uname, FirstName AS Cust_FirstName FROM USERS) AS CUSTOMER_NAME 
+					`,
+					[await getFSSAI(req.session.user.uname), false]
+				);
+				const result = await Promise.all(
+					orders.rows.map(async (order) => {
+						const contents = await pool.query(
+							`
+						SELECT ItemNo, ItemName, Quantity, (Quantity*Price) AS Price 
+						FROM ORDER_CONTENTS NATURAL JOIN FOOD_ITEMS WHERE OrderNo = $1
+						`,
+							[order.orderno]
+						);
+						return { ...order, contents: contents.rows };
+					})
+				);
+				res.send(result);
+			} else {
+				const orders = await pool.query(
+					`
+					SELECT OrderNo AS Order_No, OrderTime AS Order_Time, Cust_FirstName AS Customer, Del_FirstName AS Delivery, SUM(Quantity) AS Quantity, (SUM(Quantity*Price) + Del_Charge) AS Price 
+					FROM (((SELECT * FROM ORDERS WHERE FSSAI = $1 AND isPaid = $2) AS RESTAURANT 
+							NATURAL JOIN ORDER_CONTENTS) 
+							NATURAL JOIN FOOD_ITEMS) 
+							NATURAL JOIN (SELECT Uname AS Cust_Uname, FirstName AS Cust_FirstName FROM USERS) AS CUSTOMER_NAMES 
+							NATURAL JOIN (SELECT Uname AS Del_Uname, FirstName AS Del_FirstName FROM USERS) AS DELIVERY_NAMES
+					GROUP BY ( Order_No, Order_Time, Customer, Delivery, Del_Charge)
+					ORDER BY Order_Time DESC;
+					`,
+					[await getFSSAI(req.session.user.uname), true]
+				);
+				res.send(orders.rows);
+			}
 		} else {
 			const orders = await pool.query(
 				`

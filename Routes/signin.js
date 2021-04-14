@@ -40,11 +40,6 @@ router.post('/', async (req, res) => {
 					true,
 					credentials.uname
 				]);
-			} else if (type == 'delivery') {
-				await pool.query('UPDATE DELIVERY_PERSONS SET isAvail = $1 WHERE Del_Uname = $2', [
-					true,
-					credentials.uname
-				]);
 			}
 			res.status(202).send(req.session.user);
 		} else res.status(401).send({ message: 'Invalid Username or Password' });

@@ -61,7 +61,7 @@ app.get('/', (req, res) => {
 app.use('/signin', unauth, signin);
 app.use('/signup', unauth, signup);
 app.use('/profile', auth, profile);
-app.use('/orders', authCustomer, orders);
+app.use('/orders', auth, orders);
 app.use('/items', auth, items);
 app.use('/restaurants', authCustomer, restaurants);
 app.use('/cart', authCustomer, cart);
@@ -75,7 +75,7 @@ app.post('/signout', auth, async (req, res) => {
 				req.session.user.uname
 			]);
 		} else if (req.session.user.type === 'delivery') {
-			await pool.query('UPDATE DELIVERY_PERSONS SET isAvai = $1 WHERE Del_Uname = $2', [
+			await pool.query('UPDATE DELIVERY_PERSONS SET isAvail = $1 WHERE Del_Uname = $2', [
 				false,
 				req.session.user.uname
 			]);

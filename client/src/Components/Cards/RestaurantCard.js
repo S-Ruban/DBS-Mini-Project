@@ -6,28 +6,25 @@ import {
 	CardContent,
 	CardHeader,
 	CardMedia,
-	Chip,
 	Grid,
 	Typography
 } from '@material-ui/core';
+import Image from 'material-ui-image';
 import restaurantImage from '../../images/restaurant.jpg';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
-		maxWidth: 345,
 		border: true,
 		borderWidth: '3px',
-		borderColor: '#64eb34',
 		borderRadius: 8,
-		margin: theme.spacing(2)
+		flexGrow: 1
 	},
 	media: {
-		height: 0,
-		paddingTop: '56.25%' // 16:9
+		height: '10vh'
 	}
 }));
 
-const RestaurantCard = ({ fssai }) => {
+const RestaurantCard = ({ restaurant }) => {
 	const classes = useStyles();
 
 	const clickHandler = () => {
@@ -35,23 +32,30 @@ const RestaurantCard = ({ fssai }) => {
 	};
 
 	return (
-		<Card variant='outlined' className={classes.root} onClick={clickHandler}>
+		<Card
+			variant='outlined'
+			className={classes.root}
+			style={{ borderColor: restaurant.isveg ? '#26d43a' : '#c41f1f' }}
+			onClick={clickHandler}
+		>
 			<CardActionArea>
-				<CardHeader title='Restaurant Name' />
-				<CardMedia
-					className={classes.media}
-					image={restaurantImage}
-					title='Restaurant Image'
-				/>
+				<CardHeader title={restaurant.rest_name} titleTypographyProps={{ variant: 'h6' }} />
+				<CardMedia>
+					<Image
+						src={restaurant.img_link ? restaurant.img_link : restaurantImage}
+						aspectRatio={3}
+					/>
+				</CardMedia>
 				<CardContent>
 					<Grid container justify='space-between' alignItems='center'>
 						<Grid item>
-							<Typography variant='subtitle2'>Address Line 1</Typography>
-							<Typography variant='subtitle2'>Address Line 2</Typography>
-							<Typography variant='subtitle2'>City Pincode</Typography>
-						</Grid>
-						<Grid item>
-							<Chip label='Multicuisine' color='secondary' />
+							<Typography variant='subtitle2'>{restaurant.aline1}</Typography>
+							{restaurant.aline2 && (
+								<Typography variant='subtitle2'>{restaurant.aline2}</Typography>
+							)}
+							<Typography variant='subtitle2'>
+								{restaurant.city} - {restaurant.pin}
+							</Typography>
 						</Grid>
 					</Grid>
 				</CardContent>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router';
 import axios from 'axios';
 import { makeStyles } from '@material-ui/core/styles';
-import { Grid, Button, TextField, Typography } from '@material-ui/core';
+import { Grid, Button, TextField, Typography, FormControlLabel, Checkbox } from '@material-ui/core';
 import DoneIcon from '@material-ui/icons/Done';
 import HelpOutlineOutlinedIcon from '@material-ui/icons/HelpOutlineOutlined';
 import CloseOutlinedIcon from '@material-ui/icons/CloseOutlined';
@@ -36,26 +36,27 @@ const useStyles = makeStyles((theme) => ({
 const RestReg = () => {
 	const classes = useStyles();
 
-	const [uname, setUname] = useState('');
+	const [uname, setUname] = useState(null);
 	const [unameStatus, setUnameStatus] = useState('CHECK');
-	const [pass, setPass] = useState('');
-	const [confirm, setConfirm] = useState('');
+	const [pass, setPass] = useState(null);
+	const [confirm, setConfirm] = useState(null);
 	const [error, setError] = useState(false);
-	const [firstname, setFirstname] = useState('');
-	const [lastname, setLastname] = useState('');
-	const [phone, setPhone] = useState('');
-	const [email, setEmail] = useState('');
-	const [fssai, setFssai] = useState('');
-	const [rest_name, setRest_name] = useState('');
-	const [img_link, setImg_link] = useState('');
-	const [aline1, setAline1] = useState('');
-	const [aline2, setAline2] = useState('');
-	const [city, setCity] = useState('');
-	const [pin, setPin] = useState('');
-	const [lat, setLat] = useState('');
-	const [long, setLong] = useState('');
+	const [firstname, setFirstname] = useState(null);
+	const [lastname, setLastname] = useState(null);
+	const [phone, setPhone] = useState(null);
+	const [email, setEmail] = useState(null);
+	const [fssai, setFssai] = useState(null);
+	const [rest_name, setRest_name] = useState(null);
+	const [img_link, setImg_link] = useState(null);
+	const [aline1, setAline1] = useState(null);
+	const [aline2, setAline2] = useState(null);
+	const [city, setCity] = useState(null);
+	const [pin, setPin] = useState(null);
+	const [lat, setLat] = useState(null);
+	const [long, setLong] = useState(null);
+	const [isVeg, setIsVeg] = useState(false);
 	const [phones, setPhones] = useState([]);
-	const [newPhone, setNewPhone] = useState('');
+	const [newPhone, setNewPhone] = useState(null);
 
 	const history = useHistory();
 
@@ -83,21 +84,27 @@ const RestReg = () => {
 				pin,
 				lat,
 				long,
+				isVeg,
 				phones
 			};
-			const res = await axios.post('http://localhost:5000/signup', details);
-			if (res.statusText === 'OK') {
+			try {
+				await axios.post('http://localhost:5000/signup', details);
 				history.push('/signin');
-			} else console.log(res.data.message);
+			} catch (err) {
+				console.log(err.response.data.message);
+			}
 		}
 	};
 
 	const checkUname = async (e) => {
 		if (uname !== '') {
-			const res = await axios.get('http://localhost:5000/signup', { params: { uname } });
-			console.log(res);
-			if (res.data.isTaken) setUnameStatus('TAKEN');
-			else setUnameStatus('OK');
+			try {
+				const res = await axios.get('http://localhost:5000/signup', { params: { uname } });
+				if (res.data.isTaken) setUnameStatus('TAKEN');
+				else setUnameStatus('OK');
+			} catch (err) {
+				console.log(err.response.data.message);
+			}
 		}
 	};
 
@@ -215,17 +222,33 @@ const RestReg = () => {
 				<Grid item className={classes.formElement}>
 					<Typography variant='h6'>Restaurant Details</Typography>
 				</Grid>
-				<Grid item className={classes.formElement}>
-					<TextField
-						variant='outlined'
-						label='FSSAI Number'
-						type='tel'
-						required
-						fullWidth
-						onChange={(e) => {
-							setFssai(e.target.value);
-						}}
-					/>
+				<Grid container className={classes.formElement} justify='space-between'>
+					<Grid item>
+						<Grid item>
+							<TextField
+								variant='outlined'
+								label='FSSAI Number'
+								type='tel'
+								style={{ width: '30vw' }}
+								required
+								fullWidth
+								onChange={(e) => {
+									setFssai(e.target.value);
+								}}
+							/>
+						</Grid>
+					</Grid>
+					<Grid item>
+						<FormControlLabel
+							control={
+								<Checkbox
+									chcked={isVeg}
+									onChange={(e) => setIsVeg(e.target.checked)}
+								/>
+							}
+							label='Pure Veg?'
+						/>
+					</Grid>
 				</Grid>
 				<Grid item className={classes.formElement}>
 					<TextField
@@ -298,7 +321,6 @@ const RestReg = () => {
 							style={{ height: '3.5vw', width: '9vw' }}
 							startIcon={<AddIcon />}
 							onClick={() => {
-								console.log(newPhone);
 								setPhones(phones.concat([newPhone]));
 								setNewPhone('');
 							}}
