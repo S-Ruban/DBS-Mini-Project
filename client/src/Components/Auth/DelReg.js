@@ -31,7 +31,7 @@ const useStyles = makeStyles((theme) => ({
 	}
 }));
 
-const CustReg = () => {
+const DelReg = () => {
 	const classes = useStyles();
 
 	const [uname, setUname] = useState('');
@@ -252,4 +252,4 @@ const CustReg = () => {
 	);
 };
 
-export default CustReg;
+export default DelReg;

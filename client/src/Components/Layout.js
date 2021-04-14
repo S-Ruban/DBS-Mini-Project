@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router';
+import { useHistory, useLocation } from 'react-router';
 import axios from 'axios';
 import {
 	makeStyles,
@@ -101,6 +101,7 @@ const Layout = ({ children }) => {
 	const [search, setSearch] = useState('');
 	const dispatch = useDispatch();
 	const history = useHistory();
+	const location = useLocation();
 
 	const handleOpen = (e) => setAnchorEl(e.currentTarget);
 	const handleClose = () => setAnchorEl(null);
@@ -132,7 +133,7 @@ const Layout = ({ children }) => {
 							FODS
 						</Link>
 					</Typography>
-					{user.uname && user.type !== 'delivery' && (
+					{user.uname && user.type !== 'delivery' && location.pathname === '/dashboard' && (
 						<>
 							<div className={classes.search}>
 								<div className={classes.searchIcon}>

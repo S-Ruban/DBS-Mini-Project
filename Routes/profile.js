@@ -69,7 +69,7 @@ router.patch('/', async (req, res) => {
 			]);
 			req.app.get('io').emit('restaurantOpen', patch.isopen);
 			delete patch.isopen;
-		} else if (req.session.user.type === 'delivery' && patch.hasOwnPropert('isavail')) {
+		} else if (req.session.user.type === 'delivery' && patch.hasOwnProperty('isavail')) {
 			await pool.query('UPDATE DELIVERY_PERSONS SET isAvail = $1 WHERE Del_Uname = $2', [
 				patch.isAvail,
 				req.session.user.uname

@@ -13,6 +13,9 @@ import Layout from './Components/Layout';
 import CartContentCard from './Components/Cards/CartContentCard';
 import OrderCard from './Components/Cards/OrderCard';
 import ReviewCard from './Components/Cards/ReviewCard';
+import CustProfile from './Components/Profiles/CustProfile';
+import RestProfile from './Components/Profiles/RestProfile';
+import DelProfile from './Components/Profiles/DelProfile';
 
 const theme = createMuiTheme({
 	typography: {
@@ -46,6 +49,11 @@ function App() {
 							{user.type === 'customer' && <CustDashboard />}
 							{user.type === 'restaurant' && <RestDashboard />}
 							{user.type === 'delivery' && <DelDashboard />}
+						</Auth>
+						<Auth exact path='/profile'>
+							{user.type === 'customer' && <CustProfile />}
+							{user.type === 'restaurant' && <RestProfile />}
+							{user.type === 'delivery' && <DelProfile />}
 						</Auth>
 						<Route exact path='/element'>
 							<CartContentCard initQuantity={5} />
