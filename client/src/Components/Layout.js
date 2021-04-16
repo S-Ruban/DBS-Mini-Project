@@ -42,6 +42,7 @@ import {
 import FilterDialog from '../Components/Dialogs/FilterDialog';
 import CreateItemDialog from '../Components/Dialogs/CreateItemDialog';
 import RateDialog from '../Components/Dialogs/RateDialog';
+import imageUpload from '../Firebase/imageUpload';
 
 const useStyles = makeStyles((theme) => {
 	return {
@@ -114,7 +115,7 @@ const Layout = ({ children }) => {
 	const errorBar = useSelector((state) => state.var.errorBar);
 	const errorMessage = useSelector((state) => state.var.errorMessage);
 	const successBar = useSelector((state) => state.var.successBar);
-	const successMessage = useSelector((state) => state.var.succesMessage);
+	const successMessage = useSelector((state) => state.var.successMessage);
 
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [openFilters, setOpenFilters] = useState(false);
@@ -149,10 +150,18 @@ const Layout = ({ children }) => {
 		try {
 			setOpenCreateItem(false);
 			dispatch(setLoading(true));
+			if (item.image) {
+				item.img_link = await imageUpload(item.image, 'items');
+				console.log(item.img_link);
+			} else {
+				item.img_link = '';
+			}
+			delete item.image;
 			await axios.post('/items', item);
 			const res = await axios.get('/items', { params: filters });
 			dispatch(setItems(res.data));
 			dispatch(setLoading(false));
+			dispatch(setSuccessBar('Item added!'));
 		} catch (err) {
 			dispatch(setLoading(false));
 			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));

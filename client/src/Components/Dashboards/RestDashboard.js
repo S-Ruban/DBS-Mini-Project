@@ -59,7 +59,7 @@ const RestDashboard = () => {
 				dispatch(setItems(res.data));
 				const orders = await axios.get('/orders', { params: { pending: true } });
 				setPending(orders.data);
-				res = await axios.get(`/ratings`);
+				res = await axios.get(`/ratings/1`);
 				setRatings(res.data);
 			} catch (err) {
 				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router';
+import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import { makeStyles } from '@material-ui/core/styles';
 import { Grid, Button, TextField, Typography, FormControlLabel, Checkbox } from '@material-ui/core';
@@ -8,6 +9,8 @@ import HelpOutlineOutlinedIcon from '@material-ui/icons/HelpOutlineOutlined';
 import CloseOutlinedIcon from '@material-ui/icons/CloseOutlined';
 import DeleteIcon from '@material-ui/icons/Delete';
 import AddIcon from '@material-ui/icons/Add';
+import { setErrorBar, setLoading } from '../../Redux/varSlice';
+import imageUpload from '../../Firebase/imageUpload';
 
 const useStyles = makeStyles((theme) => ({
 	paper: {
@@ -48,6 +51,7 @@ const RestReg = () => {
 	const [fssai, setFssai] = useState(null);
 	const [rest_name, setRest_name] = useState(null);
 	const [img_link, setImg_link] = useState(null);
+	const [image, setImage] = useState(null);
 	const [aline1, setAline1] = useState(null);
 	const [aline2, setAline2] = useState(null);
 	const [city, setCity] = useState(null);
@@ -60,6 +64,8 @@ const RestReg = () => {
 
 	const history = useHistory();
 
+	const dispatch = useDispatch();
+
 	const submitHandler = async (e) => {
 		e.preventDefault();
 		if (pass !== confirm) {
@@ -67,6 +73,11 @@ const RestReg = () => {
 			setPass('');
 			setConfirm('');
 		} else {
+			dispatch(setLoading(true));
+			if (image) {
+				const url = await imageUpload(image, 'restaurants');
+				setImg_link(url);
+			}
 			const details = {
 				type: 'restaurant',
 				uname,
@@ -89,8 +100,10 @@ const RestReg = () => {
 			};
 			try {
 				await axios.post('http://localhost:5000/signup', details);
+				dispatch(setLoading(false));
 				history.push('/signin');
 			} catch (err) {
+				dispatch(setLoading(false));
 				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
 				else console.log(err);
 			}
@@ -264,15 +277,23 @@ const RestReg = () => {
 					/>
 				</Grid>
 				<Grid item className={classes.formElement}>
-					<TextField
-						variant='outlined'
-						label='Image Link (to be updated)'
-						required
+					<Button
+						variant='contained'
+						component='label'
+						color='primary'
+						disabled={Boolean(image)}
 						fullWidth
-						onChange={(e) => {
-							setImg_link(e.target.value);
-						}}
-					/>
+					>
+						{image ? `Uploaded: ${image.name}` : 'Upload Restaurant Image'}
+						<input
+							type='file'
+							accept='image/*'
+							hidden
+							onChange={(e) => {
+								if (e.target.files[0]) setImage(e.target.files[0]);
+							}}
+						/>
+					</Button>
 				</Grid>
 				<Grid item className={classes.formElement}>
 					<Typography variant='h6' style={{ fontWeight: 'bold' }}>

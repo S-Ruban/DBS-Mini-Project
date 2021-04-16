@@ -21,7 +21,7 @@ import { cuisineData, mealTypeData } from '../../data';
 
 const CreateItemDialog = ({ open, onClose, handleSave }) => {
 	const [itemname, setItemname] = useState('');
-	const [img_link, setImg_link] = useState('');
+	const [image, setImage] = useState(null);
 	const [itemdesc, setItemdesc] = useState('');
 	const [isavail, setIsavail] = useState(true);
 	const [isveg, setIsveg] = useState(false);
@@ -30,7 +30,18 @@ const CreateItemDialog = ({ open, onClose, handleSave }) => {
 	const [price, setPrice] = useState(0);
 
 	return (
-		<Dialog open={open} onClose={onClose} fullWidth maxWidth='sm'>
+		<Dialog
+			open={open}
+			onClose={() => {
+				setImage(null);
+				setIsveg(false);
+				setCuisine(cuisineData[0]);
+				setMealtype(mealTypeData[0]);
+				onClose(false);
+			}}
+			fullWidth
+			maxWidth='sm'
+		>
 			<DialogTitle>
 				<Typography variant='h6'>Create Item</Typography>
 			</DialogTitle>
@@ -62,12 +73,23 @@ const CreateItemDialog = ({ open, onClose, handleSave }) => {
 						/>
 					</Grid>
 					<Grid item>
-						<TextField
-							variant='outlined'
-							label='Image Link'
+						<Button
+							variant='contained'
+							component='label'
+							color='primary'
+							disabled={Boolean(image)}
 							fullWidth
-							onChange={(e) => setImg_link(e.target.value)}
-						/>
+						>
+							{image ? `Uploaded: ${image.name}` : 'Upload Item Image'}
+							<input
+								type='file'
+								accept='image/*'
+								hidden
+								onChange={(e) => {
+									if (e.target.files[0]) setImage(e.target.files[0]);
+								}}
+							/>
+						</Button>
 					</Grid>
 					<Grid item>
 						<Grid container justify='center' spacing={6}>
@@ -151,7 +173,13 @@ const CreateItemDialog = ({ open, onClose, handleSave }) => {
 				<Button
 					variant='contained'
 					startIcon={<CloseIcon />}
-					onClick={onClose}
+					onClick={() => {
+						setImage(null);
+						setIsveg(false);
+						setCuisine(cuisineData[0]);
+						setMealtype(mealTypeData[0]);
+						onClose(false);
+					}}
 					color='primary'
 				>
 					Cancel
@@ -162,7 +190,7 @@ const CreateItemDialog = ({ open, onClose, handleSave }) => {
 					onClick={() => {
 						const item = {
 							itemname,
-							img_link,
+							image,
 							itemdesc,
 							isavail,
 							isveg,

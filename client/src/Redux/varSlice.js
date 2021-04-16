@@ -24,7 +24,6 @@ export const varSlice = createSlice({
 		},
 		setErrorBar: (state, action) => {
 			state.errorBar = !state.errorBar;
-			console.log(state.errorBar);
 			state.errorMessage = action.payload;
 		},
 		setSuccessBar: (state, action) => {

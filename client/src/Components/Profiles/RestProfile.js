@@ -22,6 +22,9 @@ import EditIcon from '@material-ui/icons/Edit';
 import SaveIcon from '@material-ui/icons/Save';
 import PersonIcon from '@material-ui/icons/Person';
 import { signout } from '../../Redux/userSlice';
+import { setErrorBar, setLoading, setSuccessBar } from '../../Redux/varSlice';
+import imageDelete from '../../Firebase/imageDelete';
+import imageUpload from '../../Firebase/imageUpload';
 
 const useStyles = makeStyles((theme) => ({
 	paper: {
@@ -67,6 +70,7 @@ const RestProfile = () => {
 	const [fssai, setFssai] = useState(null);
 	const [rest_name, setRest_name] = useState(null);
 	const [img_link, setImg_link] = useState(null);
+	const [image, setImage] = useState(null);
 	const [aline1, setAline1] = useState(null);
 	const [aline2, setAline2] = useState(null);
 	const [city, setCity] = useState(null);
@@ -112,6 +116,12 @@ const RestProfile = () => {
 				setPass('');
 				setConfirm('');
 			} else {
+				dispatch(setLoading(true));
+				if (image) {
+					await imageDelete(img_link);
+					const url = await imageUpload(image, 'restaurants');
+					setImg_link(url);
+				}
 				const details = {
 					user: {
 						firstname,
@@ -137,12 +147,13 @@ const RestProfile = () => {
 						new: pass
 					};
 				}
-				const res = await axios.patch('/profile', details);
-				if (res.status === 200) {
-					history.push('/');
-				} else console.log(res.data.message);
+				await axios.patch('/profile', details);
+				dispatch(setSuccessBar('Profle edited!'));
+				dispatch(setLoading(false));
+				history.push('/');
 			}
 		} catch (err) {
+			dispatch(setLoading(false));
 			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
 			else console.log(err);
 		}
@@ -363,17 +374,23 @@ const RestProfile = () => {
 					/>
 				</Grid>
 				<Grid item className={classes.formElement}>
-					<TextField
-						variant='outlined'
-						label='Image Link (to be updated)'
-						value={img_link}
-						required
+					<Button
+						variant='contained'
+						component='label'
+						color='primary'
+						disabled={Boolean(image) || !edit}
 						fullWidth
-						onChange={(e) => {
-							setImg_link(e.target.value);
-						}}
-						disabled={!edit}
-					/>
+					>
+						{image ? `Uploaded: ${image.name}` : 'Change Restaurant Image'}
+						<input
+							type='file'
+							accept='image/*'
+							hidden
+							onChange={(e) => {
+								if (e.target.files[0]) setImage(e.target.files[0]);
+							}}
+						/>
+					</Button>
 				</Grid>
 				<Grid item className={classes.formElement}>
 					<Typography variant='h6' style={{ fontWeight: 'bold' }}>

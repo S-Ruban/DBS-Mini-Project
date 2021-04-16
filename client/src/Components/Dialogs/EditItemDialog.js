@@ -23,7 +23,7 @@ import { cuisineData, mealTypeData } from '../../data';
 
 const EditItemDialog = ({ open, onClose, item }) => {
 	const [itemname, setItemname] = useState(item.itemname);
-	const [img_link, setImg_link] = useState(item.img_link);
+	const [image, setImage] = useState(null);
 	const [itemdesc, setItemdesc] = useState(item.itemdesc);
 	const [isavail, setIsavail] = useState(item.isavail);
 	const [isveg, setIsveg] = useState(item.isveg);
@@ -69,14 +69,23 @@ const EditItemDialog = ({ open, onClose, item }) => {
 						/>
 					</Grid>
 					<Grid item>
-						<TextField
-							variant='outlined'
-							label='Image Link'
-							value={img_link}
+						<Button
+							variant='contained'
+							component='label'
+							color='primary'
+							disabled={Boolean(image) || !edit}
 							fullWidth
-							onChange={(e) => setImg_link(e.target.value)}
-							disabled={!edit}
-						/>
+						>
+							{image ? `Uploaded: ${image.name}` : 'Change Item Image'}
+							<input
+								type='file'
+								accept='image/*'
+								hidden
+								onChange={(e) => {
+									if (e.target.files[0]) setImage(e.target.files[0]);
+								}}
+							/>
+						</Button>
 					</Grid>
 					<Grid item>
 						<Grid container justify='center' spacing={6}>
@@ -198,7 +207,7 @@ const EditItemDialog = ({ open, onClose, item }) => {
 						if (edit) {
 							const editedItem = {
 								itemname,
-								img_link,
+								image,
 								itemdesc,
 								isavail,
 								isveg,

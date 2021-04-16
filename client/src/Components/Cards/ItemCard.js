@@ -23,8 +23,10 @@ import Image from 'material-ui-image';
 import AddIcon from '@material-ui/icons/Add';
 import ItemImage from '../../Images/foodItem.jpg';
 import { setCart, emptyCart } from '../../Redux/cartSlice';
-import { setItems, setLoading, setErrorBar } from '../../Redux/varSlice';
+import { setItems, setLoading, setErrorBar, setSuccessBar } from '../../Redux/varSlice';
 import EditItemDialog from '../Dialogs/EditItemDialog';
+import imageUpload from '../../Firebase/imageUpload';
+import imageDelete from '../../Firebase/imageDelete';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -94,10 +96,18 @@ const ItemCard = ({ item, type }) => {
 		} else {
 			try {
 				dispatch(setLoading(true));
+				if (response.image) {
+					await imageDelete(item.img_link);
+					response.img_link = await imageUpload(response.image, 'items');
+				} else {
+					response.img_link = item.img_link;
+				}
+				delete response.image;
 				await axios.patch(`items/${item.itemno}`, response);
 				const res = await axios.get('/items');
 				dispatch(setItems(res.data));
 				dispatch(setLoading(false));
+				dispatch(setSuccessBar('Item Edited!'));
 			} catch (err) {
 				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
 				else console.log(err);
@@ -110,10 +120,11 @@ const ItemCard = ({ item, type }) => {
 			setOpenDelete(false);
 			dispatch(setLoading(true));
 			await axios.delete(`items/${item.itemno}`);
+			await imageDelete(item.img_link);
 			const res = await axios.get('/items');
 			dispatch(setItems(res.data));
 			dispatch(setLoading(false));
-			console.log('Item Deleted');
+			dispatch(setSuccessBar('Item Deleted!'));
 		} catch (err) {
 			dispatch(setLoading(false));
 			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
