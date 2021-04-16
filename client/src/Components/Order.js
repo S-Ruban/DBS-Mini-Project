@@ -35,6 +35,10 @@ const useStyles = makeStyles((theme) => ({
 	},
 	grow: {
 		flexGrow: 1
+	},
+	border: {
+		borderColor: '#000000',
+		borderWidth: 3
 	}
 }));
 
@@ -103,7 +107,10 @@ const Order = () => {
 						>
 							{details.customer && (
 								<Grid item xs={4} className={classes.flex}>
-									<Card className={classes.grow}>
+									<Card
+										variant='outlined'
+										className={`${classes.grow} ${classes.border}`}
+									>
 										<CardContent>
 											<Typography variant='h5' gutterBottom>
 												CUSTOMER
@@ -142,7 +149,10 @@ const Order = () => {
 							)}
 							{details.restaurant && (
 								<Grid item xs={4} className={classes.flex}>
-									<Card className={classes.grow}>
+									<Card
+										variant='outlined'
+										className={`${classes.grow} ${classes.border}`}
+									>
 										<CardContent>
 											<Typography variant='h5' gutterBottom>
 												RESTAURANT
@@ -152,7 +162,7 @@ const Order = () => {
 											</Typography>
 											<Grid
 												container
-												justify='space-between'
+												justify='flex-start'
 												alignItems='center'
 											>
 												{details.restaurant_phones.map((phone, i) => (
@@ -174,13 +184,26 @@ const Order = () => {
 												<br />
 												{details.restaurant.city} - {details.restaurant.pin}
 											</Typography>
+											<Typography
+												variant='subtitle1'
+												className={classes.address}
+											>
+												{details.restaurant.rating
+													? `Average rating: ${parseFloat(
+															details.restaurant.rating
+													  ).toFixed(1)} (${details.restaurant.count})`
+													: `Unrated`}
+											</Typography>
 										</CardContent>
 									</Card>
 								</Grid>
 							)}
 							{details.delivery && (
 								<Grid item xs={4} className={classes.flex}>
-									<Card className={classes.grow}>
+									<Card
+										variant='outlined'
+										className={`${classes.grow} ${classes.border}`}
+									>
 										<CardContent>
 											<Typography variant='h5' gutterBottom>
 												DELIVERY PERSON
@@ -218,7 +241,10 @@ const Order = () => {
 							)}
 							{!details.delivery && (
 								<Grid item xs={4} className={classes.flex}>
-									<Card className={classes.grow}>
+									<Card
+										variant='outlined'
+										className={`${classes.grow} ${classes.border}`}
+									>
 										<CardContent>
 											<Typography variant='h5' gutterBottom>
 												DELIVERY PERSON

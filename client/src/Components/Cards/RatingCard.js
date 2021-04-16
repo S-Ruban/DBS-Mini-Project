@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Avatar, Card, CardContent, CardHeader, makeStyles, Typography } from '@material-ui/core';
 import Rating from '@material-ui/lab/Rating';
-//import moment from 'moment';
+import moment from 'moment';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -15,32 +15,32 @@ const useStyles = makeStyles((theme) => ({
 	}
 }));
 
-const ReviewCard = ({ review }) => {
+const RatingCard = ({ rating }) => {
 	const classes = useStyles();
-
-	const [value, setValue] = useState(0);
 
 	return (
 		<Card className={classes.root} variant='outlined'>
 			<CardHeader
-				title='Customer name'
-				subheader='time'
-				avatar={<Avatar>N</Avatar>}
+				title={rating.cust_uname}
+				subheader={moment(rating.reviewtime).format('D MMM YYYY h:mm A')}
+				avatar={<Avatar>{rating.cust_uname.charAt(0)}</Avatar>}
 				action={
 					<Rating
-						value={value}
-						onChange={(e, newValue) => setValue(newValue)}
+						value={rating.rating}
 						size='large'
 						className={classes.rating}
+						readOnly
 					/>
 				}
 				titleTypographyProps={{ variant: 'h5', fontWeight: 'bold' }}
 			/>
 			<CardContent>
-				<Typography variant='subtitle1'>This restaurant is really good!!</Typography>
+				<Typography variant='subtitle1'>
+					{rating.review ? rating.review : 'No review'}
+				</Typography>
 			</CardContent>
 		</Card>
 	);
 };
 
-export default ReviewCard;
+export default RatingCard;

@@ -83,9 +83,11 @@ router.get('/:order_no', async (req, res) => {
 				'SELECT * FROM USERS, CUSTOMERS WHERE Cust_Uname = $1 AND Cust_Uname = Uname',
 				[order.rows[0].cust_uname]
 			);
-			const restaurant = await pool.query('SELECT * FROM RESTAURANTS WHERE FSSAI = $1', [
-				order.rows[0].fssai
-			]);
+			const restaurant = await pool.query(
+				`SELECT *, (SELECT AVG(RATING) FROM RATINGS WHERE FSSAI = $1) AS RATING, (SELECT COUNT(RATING) FROM RATINGS WHERE FSSAI = $1) AS COUNT 
+			FROM RESTAURANTS WHERE FSSAI = $1`,
+				[order.rows[0].fssai]
+			);
 			const phones = await pool.query('SELECT * FROM RESTAURANT_PHONE WHERE FSSAI = $1', [
 				order.rows[0].fssai
 			]);

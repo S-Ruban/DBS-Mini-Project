@@ -1,4 +1,5 @@
 import React from 'react';
+import { useHistory } from 'react-router';
 import { makeStyles } from '@material-ui/core/styles';
 import {
 	Card,
@@ -26,9 +27,10 @@ const useStyles = makeStyles((theme) => ({
 
 const RestaurantCard = ({ restaurant }) => {
 	const classes = useStyles();
+	const history = useHistory();
 
 	const clickHandler = () => {
-		console.log(1234);
+		history.push(`/restaurants/${restaurant.fssai}`);
 	};
 
 	return (
@@ -39,7 +41,17 @@ const RestaurantCard = ({ restaurant }) => {
 			onClick={clickHandler}
 		>
 			<CardActionArea>
-				<CardHeader title={restaurant.rest_name} titleTypographyProps={{ variant: 'h6' }} />
+				<CardHeader
+					title={restaurant.rest_name}
+					subheader={
+						restaurant.rating
+							? `Average rating: ${parseFloat(restaurant.rating).toFixed(1)} (${
+									restaurant.count
+							  })`
+							: `Unrated`
+					}
+					titleTypographyProps={{ variant: 'h6' }}
+				/>
 				<CardMedia>
 					<Image
 						src={restaurant.img_link ? restaurant.img_link : restaurantImage}

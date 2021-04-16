@@ -7,14 +7,16 @@ const router = express();
 router.get('/:fssai', async (req, res) => {
 	try {
 		if (req.session.user.type === 'customer') {
-			const ratings = pool.query('SELECT * FROM RATINGS WHERE FSSAI = $1', [
-				req.params.fssai
-			]);
+			const ratings = await pool.query(
+				'SELECT * FROM RATINGS WHERE FSSAI = $1 ORDER BY ReviewTime DESC',
+				[req.params.fssai]
+			);
 			res.send(ratings.rows);
 		} else if (req.session.user.type === 'restaurant') {
-			const ratings = pool.query('SELECT * FROM RATINGS WHERE FSSAI = $1', [
-				await getFSSAI(req.session.user.uname)
-			]);
+			const ratings = await pool.query(
+				'SELECT * FROM RATINGS WHERE FSSAI = $1 ORDER BY ReviewTime DESC',
+				[await getFSSAI(req.session.user.uname)]
+			);
 			res.send(ratings.rows);
 		} else res.status(403).send({ message: 'Unauthorized' });
 	} catch (err) {
@@ -26,17 +28,14 @@ router.get('/:fssai', async (req, res) => {
 router.post('/:fssai', async (req, res) => {
 	try {
 		if (req.session.user.type === 'customer') {
-			const rating = pool.query(
-				'INSERT INTO RATINGS VALUES ($1, $2, $3, $4, $5) RETURNING *',
-				[
-					req.params.fssai,
-					req.session.user.uname,
-					new Date().getTime(),
-					req.body.rating,
-					req.body.review
-				]
-			);
-			res.send(rating.rows[0]);
+			const rating = await pool.query('INSERT INTO RATINGS VALUES ($1, $2, $3, $4, $5)', [
+				req.params.fssai,
+				req.session.user.uname,
+				new Date(),
+				req.body.rating,
+				req.body.review
+			]);
+			res.send({ message: 'Review added' });
 		} else res.status(403).send({ message: 'Unauthorized' });
 	} catch (err) {
 		console.log(err.stack);

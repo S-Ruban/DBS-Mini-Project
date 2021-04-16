@@ -12,7 +12,6 @@ const Orders = () => {
 				try {
 					const res = await axios.get('/orders');
 					setOrders(res.data);
-					console.log(res.data);
 				} catch (err) {
 					console.log(err.response.data.message);
 				}

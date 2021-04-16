@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router';
+import { useHistory, useLocation, matchPath } from 'react-router';
 import axios from 'axios';
 import {
 	makeStyles,
@@ -27,10 +27,12 @@ import HistoryIcon from '@material-ui/icons/History';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
+import StarIcon from '@material-ui/icons/Star';
 import { signout } from '../Redux/userSlice';
 import { changeDelAvail, setFilters, setItems, setLoading } from '../Redux/varSlice';
 import FilterDialog from '../Components/Dialogs/FilterDialog';
 import CreateItemDialog from '../Components/Dialogs/CreateItemDialog';
+import RateDialog from '../Components/Dialogs/RateDialog';
 
 const useStyles = makeStyles((theme) => {
 	return {
@@ -103,6 +105,7 @@ const Layout = ({ children }) => {
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [openFilters, setOpenFilters] = useState(false);
 	const [openCreateItem, setOpenCreateItem] = useState(false);
+	const [openRate, setOpenRate] = useState(false);
 	const [search, setSearch] = useState('');
 	const dispatch = useDispatch();
 	const history = useHistory();
@@ -137,6 +140,15 @@ const Layout = ({ children }) => {
 			dispatch(setLoading(false));
 		} catch (err) {
 			dispatch(setLoading(false));
+			console.log(err.response.data.message);
+		}
+	};
+	const handleRate = async (rating) => {
+		const fssai = matchPath(location.pathname, '/restaurants/:fssai').params.fssai;
+		try {
+			await axios.post(`/ratings/${fssai}`, rating);
+			console.log('Rated!');
+		} catch (err) {
 			console.log(err.response.data.message);
 		}
 	};
@@ -189,6 +201,26 @@ const Layout = ({ children }) => {
 					)}
 					<div className={classes.grow}></div>
 					{loading && <CircularProgress color='secondary' />}
+					{user.type === 'customer' &&
+						matchPath(location.pathname, { path: '/restaurants/:fssai' }) && (
+							<>
+								<Tooltip title='Rate this restaurant'>
+									<IconButton
+										color='inherit'
+										onClick={() => {
+											setOpenRate(true);
+										}}
+									>
+										<StarIcon />
+									</IconButton>
+								</Tooltip>
+								<RateDialog
+									open={openRate}
+									onClose={() => setOpenRate(false)}
+									handleRate={handleRate}
+								/>
+							</>
+						)}
 					{user.type === 'customer' && (
 						<Tooltip title='Cart'>
 							<IconButton

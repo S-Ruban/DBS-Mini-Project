@@ -142,7 +142,7 @@ const ItemCard = ({ item, type }) => {
 					</Button>
 				</DialogActions>
 			</Dialog>
-			<CardActionArea onClick={clickHandler}>
+			<CardActionArea onClick={user.type === 'restaurant' ? clickHandler : null}>
 				<CardHeader title={item.itemname} titleTypographyProps={{ variant: 'h6' }} />
 				<CardMedia>
 					<Image src={item.img_link ? item.img_link : ItemImage} aspectRatio={3} />
@@ -163,7 +163,9 @@ const ItemCard = ({ item, type }) => {
 				</CardContent>
 			</CardActionArea>
 			<CardActions className={classes.cardAction}>
-				<Typography variant='h4'>&#8377; {item.price}</Typography>
+				<Typography variant='h5' style={{ fontWeight: 'bold' }}>
+					&#8377; {item.price}
+				</Typography>
 				{type === 'customer' && (
 					<Button
 						variant='contained'

@@ -150,7 +150,6 @@ router.patch('/:item_no', async (req, res) => {
 
 router.delete('/:item_no', async (req, res) => {
 	try {
-		console.log(fssai, req.params.item_no);
 		const result = await pool.query(
 			'DELETE FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2 RETURNING *',
 			[fssai, req.params.item_no]

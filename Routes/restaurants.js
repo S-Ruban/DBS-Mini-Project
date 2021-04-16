@@ -5,7 +5,8 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
 	try {
-		let query = 'SELECT * FROM RESTAURANTS R WHERE isOpen = $1';
+		let query = `SELECT *, (SELECT AVG(RATING) FROM RATINGS WHERE FSSAI = R.FSSAI) AS RATING, (SELECT COUNT(RATING) FROM RATINGS WHERE FSSAI = R.FSSAI) AS COUNT 
+			FROM RESTAURANTS R WHERE isOpen = $1`;
 		let varcount = 1;
 		let params = [true];
 		if (req.query.name) {
@@ -43,11 +44,26 @@ router.get('/', async (req, res) => {
 
 router.get('/:fssai', async (req, res) => {
 	try {
-		const restaurant = await pool.query('SELECT * FROM RESTAURANT WHERE FSSAI = $1', [
-			req.params.fssai
-		]);
-		if (restaurant.rowCount) res.send(restaurant);
-		else res.status(404).send('Restaurant not found');
+		const restaurant = await pool.query(
+			`SELECT *, (SELECT AVG(RATING) FROM RATINGS WHERE FSSAI = $1) AS RATING, (SELECT COUNT(RATING) FROM RATINGS WHERE FSSAI = $1) AS COUNT 
+			FROM RESTAURANTS WHERE FSSAI = $1 AND isOpen = $2`,
+			[req.params.fssai, true]
+		);
+		const restaurant_phones = await pool.query(
+			'SELECT * FROM RESTAURANT_PHONE WHERE FSSAI = $1',
+			[req.params.fssai]
+		);
+		const items = await pool.query(
+			'SELECT * FROM FOOD_ITEMS WHERE FSSAI = $1 AND isAvail = $2',
+			[req.params.fssai, true]
+		);
+		if (restaurant.rowCount)
+			res.send({
+				restaurant: restaurant.rows[0],
+				restaurant_phones: restaurant_phones.rows,
+				items: items.rows
+			});
+		else res.status(404).send({ message: 'Restaurant not found' });
 	} catch (err) {
 		console.log(err.stack);
 		res.status(500).send({ message: err.message, stack: err.stack });

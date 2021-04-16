@@ -52,7 +52,6 @@ const Cart = () => {
 		setMapOpen(dialog);
 		if (!dialog) {
 			if (coordinates) {
-				console.log(coordinates);
 				try {
 					await axios.patch('/profile', { type: coordinates });
 					await axios.post('/cart');

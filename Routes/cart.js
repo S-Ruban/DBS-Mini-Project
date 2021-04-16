@@ -101,7 +101,6 @@ router.post('/:item_no', async (req, res) => {
 	try {
 		await client.query('BEGIN');
 		if (!cart.rowCount) {
-			console.log('here');
 			const cart = await client.query(
 				`
                 INSERT INTO ORDERS (OrderTime, IsPlaced, IsAssigned, IsPrepared, IsReceived, IsDelivered, IsPaid, Cust_Uname, FSSAI) 

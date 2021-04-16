@@ -28,13 +28,17 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import DoneIcon from '@material-ui/icons/Done';
 import ItemCard from '../Cards/ItemCard';
 import DoneAllIcon from '@material-ui/icons/DoneAll';
+import RatingCard from '../Cards/RatingCard';
 import { setItems } from '../../Redux/varSlice';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
 		marginTop: theme.spacing(1)
 	},
-	grow: { flexGrow: 1 }
+	grow: { flexGrow: 1 },
+	rating: {
+		marginTop: theme.spacing(2)
+	}
 }));
 
 const RestDashboard = () => {
@@ -42,6 +46,7 @@ const RestDashboard = () => {
 
 	const [value, setValue] = useState(0);
 	const [pending, setPending] = useState([]);
+	const [ratings, setRatings] = useState([]);
 
 	const filters = useSelector((state) => state.var.filters);
 	const items = useSelector((state) => state.var.items);
@@ -50,10 +55,12 @@ const RestDashboard = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const res = await axios.get('/items', { params: filters });
+				let res = await axios.get('/items', { params: filters });
 				dispatch(setItems(res.data));
 				const orders = await axios.get('/orders', { params: { pending: true } });
 				setPending(orders.data);
+				res = await axios.get(`/ratings`);
+				setRatings(res.data);
 			} catch (err) {
 				console.log(err.response.data.message);
 			}
@@ -178,8 +185,20 @@ const RestDashboard = () => {
 		);
 	};
 
-	const ReviewsTab = () => {
-		return <h1>REVIEWS</h1>;
+	const RatingsTab = () => {
+		return (
+			<div>
+				{!ratings.length && (
+					<Typography variant='h4' className={classes.rating}>
+						No Reviews Available
+					</Typography>
+				)}
+				{ratings.length !== 0 &&
+					ratings.map((rating) => (
+						<RatingCard rating={rating} className={classes.rating} />
+					))}
+			</div>
+		);
 	};
 
 	return (
@@ -204,7 +223,7 @@ const RestDashboard = () => {
 			</Tabs>
 			{value === 0 && <ItemsTab />}
 			{value === 1 && <PendingTab />}
-			{value === 2 && <ReviewsTab />}
+			{value === 2 && <RatingsTab />}
 		</div>
 	);
 };

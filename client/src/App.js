@@ -10,14 +10,13 @@ import CustDashboard from './Components/Dashboards/CustDashboard';
 import RestDashboard from './Components/Dashboards/RestDashboard';
 import DelDashboard from './Components/Dashboards/DelDashboard';
 import Layout from './Components/Layout';
-import OrderCard from './Components/Cards/OrderCard';
-import ReviewCard from './Components/Cards/ReviewCard';
 import CustProfile from './Components/Profiles/CustProfile';
 import RestProfile from './Components/Profiles/RestProfile';
 import DelProfile from './Components/Profiles/DelProfile';
 import Cart from './Components/Cart';
 import Orders from './Components/Orders';
 import Order from './Components/Order';
+import Restaurant from './Components/Restaurant';
 
 const theme = createMuiTheme({
 	typography: {
@@ -66,9 +65,11 @@ function App() {
 						<Auth path='/orders/:order_no'>
 							<Order />
 						</Auth>
-						<Route exact path='/element'>
-							<OrderCard />
-							<ReviewCard />
+						<Auth exact path='/restaurants/:fssai' type='customer'>
+							<Restaurant />
+						</Auth>
+						<Route>
+							<h1>404 PAGE NOT FOUND</h1>
 						</Route>
 					</Switch>
 				</Layout>
