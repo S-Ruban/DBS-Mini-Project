@@ -14,6 +14,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import CartTable from './Tables/CartTable';
 import DoneIcon from '@material-ui/icons/Done';
 import { emptyCart, setCart } from '../Redux/cartSlice';
+import { setErrorBar } from '../Redux/varSlice';
 import MapDialog from './Dialogs/MapDialog';
 
 const useStyles = makeStyles((theme) => ({
@@ -42,7 +43,8 @@ const Cart = () => {
 				if (res.data.length) dispatch(setCart(res.data));
 				else dispatch(emptyCart());
 			} catch (err) {
-				console.log(err.response.data.message);
+				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
 			}
 		};
 		fetchData();
@@ -58,7 +60,8 @@ const Cart = () => {
 					dispatch(emptyCart());
 					console.log('Order Placed');
 				} catch (err) {
-					console.log(err.response.data.message);
+					if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+					else console.log(err);
 				}
 			} else console.log('Enter location to place order');
 		}
@@ -70,7 +73,8 @@ const Cart = () => {
 				await axios.delete('/cart');
 				dispatch(emptyCart());
 			} catch (err) {
-				console.log(err.response.data.message);
+				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
 			}
 		} else setConfirmOpen(true);
 	};

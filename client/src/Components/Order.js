@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useHistory } from 'react-router';
+import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import {
 	Card,
@@ -19,6 +20,7 @@ import {
 } from '@material-ui/core';
 import OrderContentTable from './Tables/OrderContentTable';
 import CancelIcon from '@material-ui/icons/Cancel';
+import { setErrorBar } from '../Redux/varSlice';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -52,6 +54,8 @@ const Order = () => {
 	const [activeStep, setActiveStep] = useState(0);
 	const [open, setOpen] = useState(false);
 
+	const dispatch = useDispatch();
+
 	const getActiveStep = (order) => {
 		if (order.ispaid) return 6;
 		if (order.isdelivered) return 5;
@@ -68,7 +72,8 @@ const Order = () => {
 			console.log('Order cancelled');
 			history.replace('/');
 		} catch (err) {
-			console.log(err.response.data.message);
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
 		}
 	};
 
@@ -80,11 +85,12 @@ const Order = () => {
 				setDetails(res.data);
 			} catch (err) {
 				history.replace('/orders');
-				console.log(err.response.data.message);
+				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
 			}
 		};
 		fetchData();
-	}, [history, order_no]);
+	}, [history, order_no, dispatch]);
 
 	return (
 		details && (

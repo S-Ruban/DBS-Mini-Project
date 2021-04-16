@@ -104,7 +104,13 @@ const CartTable = ({ deleteCart }) => {
 															})
 														);
 													} catch (err) {
-														console.log(err.response.data.message);
+														if (err.response.data.message)
+															dispatch(
+																setErrorBar(
+																	err.response.data.message
+																)
+															);
+														else console.log(err);
 													}
 												} else await handleDelete(cartItem.itemno);
 											}}
@@ -127,7 +133,11 @@ const CartTable = ({ deleteCart }) => {
 														})
 													);
 												} catch (err) {
-													console.log(err.response.data.message);
+													if (err.response.data.message)
+														dispatch(
+															setErrorBar(err.response.data.message)
+														);
+													else console.log(err);
 												}
 											}}
 										>

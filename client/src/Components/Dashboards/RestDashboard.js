@@ -29,7 +29,7 @@ import DoneIcon from '@material-ui/icons/Done';
 import ItemCard from '../Cards/ItemCard';
 import DoneAllIcon from '@material-ui/icons/DoneAll';
 import RatingCard from '../Cards/RatingCard';
-import { setItems } from '../../Redux/varSlice';
+import { setItems, setErrorBar } from '../../Redux/varSlice';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -62,7 +62,8 @@ const RestDashboard = () => {
 				res = await axios.get(`/ratings`);
 				setRatings(res.data);
 			} catch (err) {
-				console.log(err.response.data.message);
+				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
 			}
 		};
 

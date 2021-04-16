@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
+import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import {
 	Container,
@@ -17,6 +18,7 @@ import ItemCard from '../Components/Cards/ItemCard';
 import FastfoodIcon from '@material-ui/icons/Fastfood';
 import StarRateIcon from '@material-ui/icons/StarRate';
 import RatingCard from './Cards/RatingCard';
+import { setErrorBar } from '../Redux/varSlice';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -49,6 +51,8 @@ const Restuarant = () => {
 	const { fssai } = useParams();
 	const history = useHistory();
 
+	const dispatch = useDispatch();
+
 	const [restaurant, setRestaurant] = useState(null);
 	const [restaurant_phones, setRestaurant_phones] = useState([]);
 	const [items, setItems] = useState(null);
@@ -66,11 +70,12 @@ const Restuarant = () => {
 				setRatings(res.data);
 			} catch (err) {
 				history.replace('/');
-				console.log(err.response.data.message);
+				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
 			}
 		};
 		fetchData();
-	}, [history, fssai]);
+	}, [history, fssai, dispatch]);
 
 	const ItemsTab = () => {
 		return (

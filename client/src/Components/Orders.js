@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Grid, Typography } from '@material-ui/core';
 import axios from 'axios';
 import OrderHistoryTable from './Tables/OrderHistoryTable';
+import { setErrorBar } from '../Redux/varSlice';
 
 const Orders = () => {
 	const [orders, setOrders] = useState([]);
+
+	const dispatch = useDispatch();
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -13,12 +17,13 @@ const Orders = () => {
 					const res = await axios.get('/orders');
 					setOrders(res.data);
 				} catch (err) {
-					console.log(err.response.data.message);
+					if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+					else console.log(err);
 				}
 			} catch (err) {}
 		};
 		fetchData();
-	}, []);
+	}, [dispatch]);
 
 	return (
 		<Grid

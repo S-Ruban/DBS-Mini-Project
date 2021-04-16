@@ -23,7 +23,7 @@ import Image from 'material-ui-image';
 import AddIcon from '@material-ui/icons/Add';
 import ItemImage from '../../Images/foodItem.jpg';
 import { setCart, emptyCart } from '../../Redux/cartSlice';
-import { setItems, setLoading } from '../../Redux/varSlice';
+import { setItems, setLoading, setErrorBar } from '../../Redux/varSlice';
 import EditItemDialog from '../Dialogs/EditItemDialog';
 
 const useStyles = makeStyles((theme) => ({
@@ -68,7 +68,8 @@ const ItemCard = ({ item, type }) => {
 			setAvail(e.target.checked);
 			await axios.patch(`/items/${item.itemno}`, { isavail: e.target.checked });
 		} catch (err) {
-			console.log(err.response.data.message);
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
 		}
 	};
 
@@ -79,7 +80,8 @@ const ItemCard = ({ item, type }) => {
 			if (res.data.length) dispatch(setCart(res.data));
 			else dispatch(emptyCart());
 		} catch (err) {
-			console.log(err.response.data.message);
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
 		}
 	};
 
@@ -97,7 +99,8 @@ const ItemCard = ({ item, type }) => {
 				dispatch(setItems(res.data));
 				dispatch(setLoading(false));
 			} catch (err) {
-				console.log(err.response.data.message);
+				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
 			}
 		}
 	};
@@ -113,7 +116,8 @@ const ItemCard = ({ item, type }) => {
 			console.log('Item Deleted');
 		} catch (err) {
 			dispatch(setLoading(false));
-			console.log(err.response.data.message);
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
 		}
 	};
 

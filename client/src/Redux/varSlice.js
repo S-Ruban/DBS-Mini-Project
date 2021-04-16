@@ -4,6 +4,10 @@ export const varSlice = createSlice({
 	name: 'var',
 	initialState: {
 		loading: false,
+		errorBar: false,
+		errorMessage: '',
+		successBar: false,
+		succesMessage: '',
 		delAvail: false,
 		filters: {
 			name: null,
@@ -17,6 +21,15 @@ export const varSlice = createSlice({
 	reducers: {
 		setLoading: (state, action) => {
 			state.loading = action.payload;
+		},
+		setErrorBar: (state, action) => {
+			state.errorBar = !state.errorBar;
+			console.log(state.errorBar);
+			state.errorMessage = action.payload;
+		},
+		setSuccessBar: (state, action) => {
+			state.successBar = !state.successBar;
+			state.successMessage = action.payload;
 		},
 		changeDelAvail: (state, action) => {
 			state.delAvail = action.payload;
@@ -38,6 +51,8 @@ export const {
 	changeDelAvail,
 	setFilters,
 	setItems,
-	setRestaurants
+	setRestaurants,
+	setErrorBar,
+	setSuccessBar
 } = varSlice.actions;
 export default varSlice.reducer;

@@ -91,7 +91,8 @@ const RestReg = () => {
 				await axios.post('http://localhost:5000/signup', details);
 				history.push('/signin');
 			} catch (err) {
-				console.log(err.response.data.message);
+				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
 			}
 		}
 	};
@@ -103,7 +104,8 @@ const RestReg = () => {
 				if (res.data.isTaken) setUnameStatus('TAKEN');
 				else setUnameStatus('OK');
 			} catch (err) {
-				console.log(err.response.data.message);
+				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
 			}
 		}
 	};

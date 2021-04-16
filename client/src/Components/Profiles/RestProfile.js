@@ -143,7 +143,8 @@ const RestProfile = () => {
 				} else console.log(res.data.message);
 			}
 		} catch (err) {
-			console.log(err.response.data.message);
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
 		}
 	};
 
@@ -155,7 +156,8 @@ const RestProfile = () => {
 			console.log(res.data.message);
 			history.push('/');
 		} catch (err) {
-			console.log(err.response.data.message);
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
 		}
 	};
 

@@ -18,8 +18,10 @@ import {
 	FormControlLabel,
 	Switch,
 	Button,
-	CircularProgress
+	CircularProgress,
+	Snackbar
 } from '@material-ui/core';
+import MuiAlert from '@material-ui/lab/Alert';
 import FastfoodIcon from '@material-ui/icons/Fastfood';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 import SearchIcon from '@material-ui/icons/Search';
@@ -29,7 +31,14 @@ import FilterListIcon from '@material-ui/icons/FilterList';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import StarIcon from '@material-ui/icons/Star';
 import { signout } from '../Redux/userSlice';
-import { changeDelAvail, setFilters, setItems, setLoading } from '../Redux/varSlice';
+import {
+	changeDelAvail,
+	setFilters,
+	setItems,
+	setLoading,
+	setErrorBar,
+	setSuccessBar
+} from '../Redux/varSlice';
 import FilterDialog from '../Components/Dialogs/FilterDialog';
 import CreateItemDialog from '../Components/Dialogs/CreateItemDialog';
 import RateDialog from '../Components/Dialogs/RateDialog';
@@ -102,6 +111,11 @@ const Layout = ({ children }) => {
 	const delAvail = useSelector((state) => state.var.delAvail);
 	const filters = useSelector((state) => state.var.filters);
 	const loading = useSelector((state) => state.var.loading);
+	const errorBar = useSelector((state) => state.var.errorBar);
+	const errorMessage = useSelector((state) => state.var.errorMessage);
+	const successBar = useSelector((state) => state.var.successBar);
+	const successMessage = useSelector((state) => state.var.succesMessage);
+
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [openFilters, setOpenFilters] = useState(false);
 	const [openCreateItem, setOpenCreateItem] = useState(false);
@@ -125,7 +139,8 @@ const Layout = ({ children }) => {
 			history.push('/signin');
 			console.log('Signed Out!');
 		} catch (err) {
-			console.log(err.response.data.message);
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
 		} finally {
 			setAnchorEl(null);
 		}
@@ -140,7 +155,8 @@ const Layout = ({ children }) => {
 			dispatch(setLoading(false));
 		} catch (err) {
 			dispatch(setLoading(false));
-			console.log(err.response.data.message);
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
 		}
 	};
 	const handleRate = async (rating) => {
@@ -149,7 +165,8 @@ const Layout = ({ children }) => {
 			await axios.post(`/ratings/${fssai}`, rating);
 			console.log('Rated!');
 		} catch (err) {
-			console.log(err.response.data.message);
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
 		}
 	};
 
@@ -313,6 +330,36 @@ const Layout = ({ children }) => {
 				<div className={classes.toolbarspace} />
 				{children}
 			</div>
+			<Snackbar
+				open={errorBar}
+				autoHideDuration={4000}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+				onClose={() => dispatch(setErrorBar(''))}
+			>
+				<MuiAlert
+					elevation={6}
+					variant='filled'
+					onClose={() => dispatch(setErrorBar(''))}
+					severity='error'
+				>
+					{errorMessage}
+				</MuiAlert>
+			</Snackbar>
+			<Snackbar
+				open={successBar}
+				autoHideDuration={4000}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+				onClose={() => dispatch(setSuccessBar(''))}
+			>
+				<MuiAlert
+					elevation={6}
+					variant='filled'
+					onClose={() => dispatch(setSuccessBar(''))}
+					severity='success'
+				>
+					{successMessage}
+				</MuiAlert>
+			</Snackbar>
 		</div>
 	);
 };

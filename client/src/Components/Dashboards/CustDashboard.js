@@ -37,7 +37,8 @@ const CustDashboard = () => {
 				if (res.data.length) dispatch(setCart(res.data));
 				else dispatch(emptyCart());
 			} catch (err) {
-				console.log(err.response.data.message);
+				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
 			}
 		};
 		fetchData();
