@@ -7,11 +7,11 @@ router.get('/', async (req, res) => {
 	try {
 		const cart = await pool.query(
 			`
-            SELECT OrderNo AS Order_No, Rest_Name As Restaurant, ItemName, Price, Quantity 
+            SELECT OrderNo AS Order_No, R.FSSAI AS FSSAI, Rest_Name As Restaurant, ItemNo, ItemName, Price, Quantity 
 			FROM (((SELECT * FROM ORDERS WHERE Cust_Uname = $1 AND isPlaced = $2) AS CART
 					NATURAL JOIN ORDER_CONTENTS) 
-					NATURAL JOIN FOOD_ITEMS) 
-					NATURAL JOIN RESTAURANTS;
+					NATURAL JOIN FOOD_ITEMS) O
+					JOIN RESTAURANTS R ON O.FSSAI = R.FSSAI;
             `,
 			[req.session.user.uname, false]
 		);
@@ -30,11 +30,11 @@ router.post('/', async (req, res) => {
 			'SELECT * FROM ORDERS WHERE Cust_Uname = $1 AND isPlaced = $2',
 			[req.session.user.uname, false]
 		);
-		if (cart.rowCount) res.status(406).send({ message: 'Cart is Empty' });
+		if (!cart.rowCount) res.status(406).send({ message: 'Cart is Empty' });
 		else {
 			const order = await client.query(
 				'UPDATE ORDERS SET isPlaced = $1, OrderTime = $2 WHERE OrderNo = $3 RETURNING *',
-				[true, new Date().getTime(), cart.rows[0].orderno]
+				[true, new Date(), cart.rows[0].orderno]
 			);
 
 			const customer = await client.query(
@@ -49,8 +49,14 @@ router.post('/', async (req, res) => {
 				'assignDelivery',
 				{
 					orderNo: cart.rows[0].orderno,
-					cust_loc: customer.rows[0],
-					rest_loc: restaurant.rows[0],
+					cust_loc: {
+						lat: parseFloat(customer.rows[0].lat),
+						long: parseFloat(customer.rows[0].long)
+					},
+					rest_loc: {
+						lat: parseFloat(restaurant.rows[0].lat),
+						long: parseFloat(restaurant.rows[0].long)
+					},
 					rejectedBy: []
 				},
 				{ maxAttemps: 5 }
@@ -80,12 +86,13 @@ router.delete('/', async (req, res) => {
 	}
 });
 
-let cart;
+let orderno;
 router.use(async (req, res, next) => {
 	cart = await pool.query('SELECT * FROM ORDERS WHERE Cust_Uname = $1 AND isPlaced = $2', [
 		req.session.user.uname,
 		false
 	]);
+	if (cart.rowCount) orderno = cart.rows[0].orderno;
 	next();
 });
 
@@ -94,13 +101,14 @@ router.post('/:item_no', async (req, res) => {
 	try {
 		await client.query('BEGIN');
 		if (!cart.rowCount) {
-			cart = await client.query(
+			console.log('here');
+			const cart = await client.query(
 				`
                 INSERT INTO ORDERS (OrderTime, IsPlaced, IsAssigned, IsPrepared, IsReceived, IsDelivered, IsPaid, Cust_Uname, FSSAI) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
                 `,
 				[
-					new Date().getTime(),
+					new Date(),
 					false,
 					false,
 					false,
@@ -111,29 +119,36 @@ router.post('/:item_no', async (req, res) => {
 					req.body.fssai
 				]
 			);
+			orderno = cart.rows[0].orderno;
 		}
 
 		let item = await client.query(
 			'SELECT * FROM ORDER_CONTENTS WHERE OrderNo = $1 AND ItemNo = $2 AND FSSAI = $3',
-			[cart.rows[0].orderno, req.params.item_no, req.body.fssai]
+			[orderno, req.params.item_no, req.body.fssai]
 		);
 		if (item.rowCount) {
 			item = await client.query(
 				'UPDATE ORDER_CONTENTS SET Quantity = Quantity + 1 WHERE OrderNo = $1 AND ItemNo = $2 AND FSSAI = $3 RETURNING *',
-				[cart.rows[0].orderno, req.params.item_no, req.body.fssai]
+				[orderno, req.params.item_no, req.body.fssai]
 			);
 		} else {
 			item = await client.query(
 				'INSERT INTO ORDER_CONTENTS VALUES ($1, $2, $3, $4) RETURNING *',
-				[cart.rows[0].orderno, req.params.item_no, req.body.fssai, 1]
+				[orderno, req.params.item_no, req.body.fssai, 1]
 			);
 		}
 		client.query('COMMIT');
 		res.status(201).send(item.rows[0]);
 	} catch (err) {
 		client.query('ROLLBACK');
-		console.log(err.stack);
-		res.status(500).send({ message: err.message, stack: err.stack });
+		if (err.constraint === 'samerest') {
+			res.status(400).send({
+				message: 'All items in the cart must be from the same restaurant'
+			});
+		} else {
+			console.log(err.stack);
+			res.status(500).send({ message: err.message, stack: err.stack });
+		}
 	} finally {
 		client.release();
 	}

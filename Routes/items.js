@@ -11,9 +11,9 @@ router.get('/', async (req, res) => {
 				varcount = 0;
 			let params = [];
 			if (req.session.user.type === 'customer') {
-				query = `SELECT * FROM FOOD_ITEMS WHERE FSSAI IN (SELECT FSSAI FROM RESTAURANTS WHERE isOpen = $${
+				query = `SELECT * FROM FOOD_ITEMS NATURAL JOIN (SELECT FSSAI, Rest_Name, isOpen FROM RESTAURANTS) AS RESTUARANTS WHERE isOpen = $${
 					varcount + 1
-				}) AND isAvail = $${varcount + 2}`;
+				} AND isAvail = $${varcount + 2}`;
 				params = params.concat([true, true]);
 				varcount += 2;
 			} else {
@@ -55,7 +55,6 @@ router.get('/', async (req, res) => {
 				query += ` AND Mealtype IN (${mealtypecount.join(',')})`;
 				params = params.concat(req.query.mealTypes);
 			}
-			console.log(query, params);
 			const items = await pool.query(query, params);
 			res.send(items.rows);
 		} else res.status(403).send({ message: 'Unauthorized' });
@@ -95,7 +94,7 @@ router.post('/', async (req, res) => {
 		result = await pool.query(
 			'INSERT INTO FOOD_ITEMS VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
 			[
-				result.rows[0].count + 1,
+				parseInt(result.rows[0].count) + 1,
 				fssai,
 				req.body.itemname,
 				req.body.img_link,
@@ -130,15 +129,17 @@ router.patch('/:item_no', async (req, res) => {
 				delete req.body.isavail;
 			}
 
-			const setItemStatement = getSetStatement(req.body);
-			item = await pool.query(
-				`
+			if (Object.keys(req.body).length) {
+				const setItemStatement = getSetStatement(req.body);
+				item = await pool.query(
+					`
 				UPDATE FOOD_ITEMS ${setItemStatement.query} 
 				WHERE FSSAI = $${setItemStatement.nextIndex} AND
 				ItemNo = $${setItemStatement.nextIndex + 1} RETURNING *
 				`,
-				setItemStatement.params.concat([fssai, req.params.item_no])
-			);
+					setItemStatement.params.concat([fssai, req.params.item_no])
+				);
+			}
 			res.send(item.rows[0]);
 		} else res.status(404).send({ message: 'Item not found' });
 	} catch (err) {
@@ -147,12 +148,13 @@ router.patch('/:item_no', async (req, res) => {
 	}
 });
 
-router.delete('/item_no', async (req, res) => {
+router.delete('/:item_no', async (req, res) => {
 	try {
-		const result = await pool.query('DELETE FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2', [
-			fssai,
-			req.params.item_no
-		]);
+		console.log(fssai, req.params.item_no);
+		const result = await pool.query(
+			'DELETE FROM FOOD_ITEMS WHERE FSSAI = $1 AND ItemNo = $2 RETURNING *',
+			[fssai, req.params.item_no]
+		);
 		if (result.rowCount) res.send({ message: 'Item Deleted!' });
 		else res.status(404).send({ message: 'Item not found' });
 	} catch (err) {

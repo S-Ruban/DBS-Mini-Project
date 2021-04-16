@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
 	Tabs,
 	Tab,
@@ -28,6 +28,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import DoneIcon from '@material-ui/icons/Done';
 import ItemCard from '../Cards/ItemCard';
 import DoneAllIcon from '@material-ui/icons/DoneAll';
+import { setItems } from '../../Redux/varSlice';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -40,15 +41,17 @@ const RestDashboard = () => {
 	const classes = useStyles();
 
 	const [value, setValue] = useState(0);
-	const [items, setItems] = useState([]);
 	const [pending, setPending] = useState([]);
+
 	const filters = useSelector((state) => state.var.filters);
+	const items = useSelector((state) => state.var.items);
+	const dispatch = useDispatch();
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
 				const res = await axios.get('/items', { params: filters });
-				setItems(res.data);
+				dispatch(setItems(res.data));
 				const orders = await axios.get('/orders', { params: { pending: true } });
 				setPending(orders.data);
 			} catch (err) {
@@ -57,7 +60,7 @@ const RestDashboard = () => {
 		};
 
 		fetchData();
-	}, [filters]);
+	}, [filters, dispatch]);
 
 	const ItemsTab = () => {
 		return (
@@ -137,8 +140,7 @@ const RestDashboard = () => {
 									);
 								})}
 								<TableRow>
-									<TableCell>-</TableCell>
-									<TableCell>
+									<TableCell colSpan={2}>
 										<b>Grand Total</b>
 									</TableCell>
 									<TableCell>

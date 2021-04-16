@@ -52,6 +52,7 @@ const SignIn = () => {
 			dispatch(signin(res.data));
 			history.push('/dashboard');
 		} catch (err) {
+			console.log(err.response);
 			if (err.response.status === 401) setError(true);
 			console.log(err.response.data.message);
 		}

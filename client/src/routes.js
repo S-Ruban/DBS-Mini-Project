@@ -4,6 +4,15 @@ import { useSelector } from 'react-redux';
 
 const Auth = (props) => {
 	const user = useSelector((state) => state.user);
+
+	if (props.type) {
+		return (
+			<Route exact={props.exact} path={props.path}>
+				{user.uname && user.type === props.type && props.children}
+				{!(user.uname && user.type === props.type) && <Redirect to='/dashboard' />}
+			</Route>
+		);
+	}
 	return (
 		<Route exact path={props.path}>
 			{user.uname && props.children}

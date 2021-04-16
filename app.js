@@ -38,7 +38,7 @@ const sessionConfig = {
 	}),
 	secret: process.env.SECRET,
 	cookie: {
-		maxAge: 1000 * 60 * 60,
+		maxAge: 1000 * 60 * 60 * 12,
 		secure: process.env.MODE !== 'development',
 		httpOnly: true
 	},

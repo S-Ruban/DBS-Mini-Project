@@ -5,7 +5,6 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
 	try {
-		console.log(req.query);
 		let query = 'SELECT * FROM RESTAURANTS R WHERE isOpen = $1';
 		let varcount = 1;
 		let params = [true];

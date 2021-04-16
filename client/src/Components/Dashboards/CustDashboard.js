@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Accordion, AccordionDetails, AccordionSummary, Grid, Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import axios from 'axios';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import RestaurantCard from '../Cards/RestaurantCard';
 import ItemCard from '../Cards/ItemCard';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import { emptyCart, setCart } from '../../Redux/cartSlice';
+import { setItems, setRestaurants } from '../../Redux/varSlice';
 
 const useStyles = makeStyles((theme) => ({
 	item: {
@@ -15,9 +17,10 @@ const useStyles = makeStyles((theme) => ({
 
 const CustDashboard = () => {
 	const classes = useStyles();
-	const [restaurants, setRestaurants] = useState([]);
-	const [items, setItems] = useState([]);
 	const filters = useSelector((state) => state.var.filters);
+	const items = useSelector((state) => state.var.items);
+	const restaurants = useSelector((state) => state.var.restaurants);
+	const dispatch = useDispatch();
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -25,17 +28,20 @@ const CustDashboard = () => {
 				let res = await axios.get('/restaurants', {
 					params: filters
 				});
-				setRestaurants(res.data);
+				dispatch(setRestaurants(res.data));
 				res = await axios.get('/items', {
 					params: filters
 				});
-				setItems(res.data);
+				dispatch(setItems(res.data));
+				res = await axios.get('/cart');
+				if (res.data.length) dispatch(setCart(res.data));
+				else dispatch(emptyCart());
 			} catch (err) {
 				console.log(err.response.data.message);
 			}
 		};
 		fetchData();
-	}, [filters]);
+	}, [filters, dispatch]);
 
 	return (
 		<Grid container justify='center'>

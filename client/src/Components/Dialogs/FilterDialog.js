@@ -36,7 +36,7 @@ const FilterDialog = ({ open, onClose }) => {
 		<Dialog onClose={onClose} open={open}>
 			<DialogTitle>Choose Filters</DialogTitle>
 			<DialogContent>
-				<Grid container justify='center' alignItem='center' spacing={2}>
+				<Grid container justify='center' alignItems='center' spacing={2}>
 					<Grid item xs={12}>
 						<FormControlLabel
 							control={

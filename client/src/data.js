@@ -1,4 +1,5 @@
 const cuisineData = [
+	'Misc',
 	'Indian',
 	'Chinese',
 	'Italian',
@@ -8,10 +9,9 @@ const cuisineData = [
 	'Mexican',
 	'Continental',
 	'American',
-	'Arabian',
-	'Misc'
+	'Arabian'
 ];
 
-const mealTypeData = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Beverage', 'Chat', 'Misc'];
+const mealTypeData = ['Misc', 'Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Beverage', 'Chat'];
 
 export { cuisineData, mealTypeData };

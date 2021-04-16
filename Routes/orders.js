@@ -7,73 +7,54 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
 	try {
-		if (req.session.user.type === 'customer') {
+		if (req.session.user.type === 'restaurant' && req.query.pending) {
 			const orders = await pool.query(
 				`
-                SELECT OrderNo AS Order_No, OrderTime As Order_Time, Rest_Name AS Restaurant, FirstName AS Delivery, SUM(Quantity) AS Quantity, (SUM(Quantity*Price) + Del_Charge) AS Price
-				FROM ((((SELECT * FROM ORDERS WHERE Cust_Uname = $1 AND isPaid = $2) AS CUSTOMER 
-					NATURAL JOIN ORDER_CONTENTS) 
-					NATURAL JOIN FOOD_ITEMS) 
-					NATURAL JOIN RESTAURANTS) 
-					JOIN USERS ON Del_Uname = Uname 
-				GROUP BY ( Order_No, Order_Time, Restaurant, Delivery, Del_Charge)
-				ORDER BY Order_Time DESC;
-                `,
-				[req.session.user.uname, true]
+				SELECT OrderNo, OrderTime, isPrepared, Cust_FirstName AS Customer
+				FROM (SELECT * FROM ORDERS WHERE FSSAI = $1 AND isDelivered = $2) AS RESTAURANT 
+						NATURAL JOIN (SELECT Uname AS Cust_Uname, FirstName AS Cust_FirstName FROM USERS) AS CUSTOMER_NAME 
+				`,
+				[await getFSSAI(req.session.user.uname), false]
 			);
-			res.send(orders.rows);
-		} else if (req.session.user.type === 'restaurant') {
-			if (req.query.pending) {
-				const orders = await pool.query(
-					`
-					SELECT OrderNo, OrderTime, isPrepared, Cust_FirstName AS Customer
-					FROM (SELECT * FROM ORDERS WHERE FSSAI = $1 AND isDelivered = $2) AS RESTAURANT 
-							NATURAL JOIN (SELECT Uname AS Cust_Uname, FirstName AS Cust_FirstName FROM USERS) AS CUSTOMER_NAME 
+			const result = await Promise.all(
+				orders.rows.map(async (order) => {
+					const contents = await pool.query(
+						`
+					SELECT ItemNo, ItemName, Quantity, (Quantity*Price) AS Price 
+					FROM ORDER_CONTENTS NATURAL JOIN FOOD_ITEMS WHERE OrderNo = $1
 					`,
-					[await getFSSAI(req.session.user.uname), false]
-				);
-				const result = await Promise.all(
-					orders.rows.map(async (order) => {
-						const contents = await pool.query(
-							`
-						SELECT ItemNo, ItemName, Quantity, (Quantity*Price) AS Price 
-						FROM ORDER_CONTENTS NATURAL JOIN FOOD_ITEMS WHERE OrderNo = $1
-						`,
-							[order.orderno]
-						);
-						return { ...order, contents: contents.rows };
-					})
-				);
-				res.send(result);
-			} else {
-				const orders = await pool.query(
-					`
-					SELECT OrderNo AS Order_No, OrderTime AS Order_Time, Cust_FirstName AS Customer, Del_FirstName AS Delivery, SUM(Quantity) AS Quantity, (SUM(Quantity*Price) + Del_Charge) AS Price 
-					FROM (((SELECT * FROM ORDERS WHERE FSSAI = $1 AND isPaid = $2) AS RESTAURANT 
-							NATURAL JOIN ORDER_CONTENTS) 
-							NATURAL JOIN FOOD_ITEMS) 
-							NATURAL JOIN (SELECT Uname AS Cust_Uname, FirstName AS Cust_FirstName FROM USERS) AS CUSTOMER_NAMES 
-							NATURAL JOIN (SELECT Uname AS Del_Uname, FirstName AS Del_FirstName FROM USERS) AS DELIVERY_NAMES
-					GROUP BY ( Order_No, Order_Time, Customer, Delivery, Del_Charge)
-					ORDER BY Order_Time DESC;
-					`,
-					[await getFSSAI(req.session.user.uname), true]
-				);
-				res.send(orders.rows);
-			}
+						[order.orderno]
+					);
+					return { ...order, contents: contents.rows };
+				})
+			);
+			res.send(result);
 		} else {
+			let whereClause, firstParam;
+			if (req.session.user.type === 'customer') {
+				whereClause = 'Cust_Uname';
+				firstParam = req.session.user.uname;
+			} else if (req.session.user.type === 'restaurant') {
+				whereClause = 'FSSAI';
+				firstParam = await getFSSAI(req.session.user.uname);
+			} else {
+				whereClause = 'Del_Uname';
+				firstParam = req.session.user.uname;
+			}
+
 			const orders = await pool.query(
 				`
-                SELECT OrderNo AS Order_No, OrderTime AS Order_Time, FirstName AS Customer, Rest_Name AS Restaurant, SUM(Quantity) AS Quantity, Del_Charge AS Price
-				FROM ((((SELECT * FROM ORDERS WHERE Del_Uname = $1 AND isPaid = $2) AS DELIVERY_PERSON 
-						NATURAL JOIN ORDER_CONTENTS) 
-						NATURAL JOIN FOOD_ITEMS) 
-						NATURAL JOIN RESTAURANTS) 
-						JOIN USERS ON Cust_Uname = Uname
-				GROUP BY ( Order_No, Order_Time, Customer, Restaurant, Del_Charge)
-				ORDER BY Order_Time DESC;
+                SELECT OrderNo, OrderTime, isAssigned, isPaid, Cust_name, Rest_name, Del_name, SUM(Quantity) AS Quantity, (SUM(Quantity*Price)) AS Price, Del_Charge
+				FROM (((((SELECT OrderNo, OrderTime, isAssigned, isPaid, Cust_Uname, FSSAI, Del_Uname, Del_Charge FROM ORDERS WHERE ${whereClause} = $1 AND isPlaced = $2) AS O
+					NATURAL JOIN (SELECT Uname AS Cust_Uname, Firstname AS Cust_name FROM USERS) AS C)
+					NATURAL JOIN (SELECT FSSAI, Rest_Name FROM RESTAURANTS) AS R)
+					LEFT OUTER JOIN (SELECT Uname, FirstName AS Del_name FROM USERS) AS D ON Del_Uname = Uname)
+					NATURAL JOIN (SELECT OrderNo, ItemNo, Quantity FROM ORDER_CONTENTS) AS OC)
+					NATURAL JOIN (SELECT ItemNo, FSSAI, Price FROM FOOD_ITEMS) AS FI
+				GROUP BY (OrderNo, OrderTime, isAssigned, isPaid, Cust_name, Rest_name, Del_name, Del_Charge)
+				ORDER BY OrderTime DESC;
                 `,
-				[req.session.user.uname, true]
+				[firstParam, true]
 			);
 			res.send(orders.rows);
 		}
@@ -105,13 +86,19 @@ router.get('/:order_no', async (req, res) => {
 			const restaurant = await pool.query('SELECT * FROM RESTAURANTS WHERE FSSAI = $1', [
 				order.rows[0].fssai
 			]);
-			const delivery = await pool.query(
-				'SELECT * FROM USERS, DELIVERY_PERSONS WHERE Del_Uname = $1 AND Del_Uname = Uname',
-				[order.rows[0].del_uname]
-			);
+			const phones = await pool.query('SELECT * FROM RESTAURANT_PHONE WHERE FSSAI = $1', [
+				order.rows[0].fssai
+			]);
+			let delivery = null;
+			if (order.rows[0].del_uname) {
+				delivery = await pool.query(
+					'SELECT * FROM USERS, DELIVERY_PERSONS WHERE Del_Uname = $1 AND Del_Uname = Uname',
+					[order.rows[0].del_uname]
+				);
+			}
 			const orderContent = await pool.query(
 				`
-                SELECT FI.ItemName, FI.Price, OC.Quantity FROM ORDER_CONTENTS OC, FOOD_ITEMS FI;
+                SELECT FI.ItemNo, FI.ItemName, FI.Price, OC.Quantity FROM ORDER_CONTENTS OC, FOOD_ITEMS FI
 				WHERE OC.OrderNo = $1 AND OC.ItemNo = FI.ItemNo AND OC.FSSAI = FI.FSSAI;
                 `,
 				[req.params.order_no]
@@ -121,7 +108,8 @@ router.get('/:order_no', async (req, res) => {
 				orderContent: orderContent.rows,
 				customer: customer.rows[0],
 				restaurant: restaurant.rows[0],
-				delivery: delivery.rows[0]
+				restaurant_phones: phones.rows,
+				delivery: delivery ? delivery.rows[0] : delivery
 			});
 		} else res.status(403).send({ message: 'Unauthorized' });
 	} catch (err) {

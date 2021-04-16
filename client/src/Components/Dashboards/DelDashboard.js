@@ -6,7 +6,7 @@ const DelDashboard = () => {
 	const delAvail = useSelector((state) => state.var.delAvail);
 
 	return (
-		<Grid container justify='center' alignItems='center' style={{ minHeight: '100vh' }}>
+		<Grid container justify='center' alignItems='center' style={{ minHeight: '80vh' }}>
 			<Grid item>
 				{delAvail && <Typography variant='h3'>Waiting for Orders ...</Typography>}
 				{!delAvail && <Typography variant='h3'>You are not accepting orders</Typography>}

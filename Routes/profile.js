@@ -79,39 +79,42 @@ router.patch('/', async (req, res) => {
 		}
 
 		let updatedUser = null;
-		if (Object.keys(patch.user).length) {
-			const setUserStatement = getSetStatement(patch.user);
-			updatedUser = await client.query(
-				`UPDATE USERS ${setUserStatement.query} WHERE uname = $${setUserStatement.nextIndex}`,
-				setUserStatement.params.concat([req.session.user.uname])
-			);
-		}
-
-		let updatedType = null;
-		if (Object.keys(patch.type).length) {
-			const setTypeStatement = getSetStatement(patch.type);
-			if (req.session.user.type === 'customer') {
-				updatedType = await client.query(
-					`UPDATE CUSTOMERS ${setTypeStatement.query} WHERE Cust_Uname = $${setTypeStatement.nextIndex}`,
-					setTypeStatement.params.concat([req.session.user.uname])
-				);
-			} else if (req.session.user.type === 'restaurant') {
-				updatedType = await client.query(
-					`UPDATE RESTAURANTS ${setTypeStatement.query} WHERE Rest_Uname = $${setTypeStatement.nextIndex}`,
-					setTypeStatement.params.concat([req.session.user.uname])
-				);
-			} else {
-				updatedType = await client.query(
-					`UPDATE DELIVERY_PERSONS ${setTypeStatement.query} WHERE Del_Uname = $${setTypeStatement.nextIndex}`,
-					setTypeStatement.params.concat([req.session.user.uname])
+		if (patch.user) {
+			if (Object.keys(patch.user).length) {
+				const setUserStatement = getSetStatement(patch.user);
+				updatedUser = await client.query(
+					`UPDATE USERS ${setUserStatement.query} WHERE uname = $${setUserStatement.nextIndex} RETURNING *`,
+					setUserStatement.params.concat([req.session.user.uname])
 				);
 			}
 		}
 
+		let updatedType = null;
+		if (patch.type) {
+			if (Object.keys(patch.type).length) {
+				const setTypeStatement = getSetStatement(patch.type);
+				if (req.session.user.type === 'customer') {
+					updatedType = await client.query(
+						`UPDATE CUSTOMERS ${setTypeStatement.query} WHERE Cust_Uname = $${setTypeStatement.nextIndex} RETURNING *`,
+						setTypeStatement.params.concat([req.session.user.uname])
+					);
+				} else if (req.session.user.type === 'restaurant') {
+					updatedType = await client.query(
+						`UPDATE RESTAURANTS ${setTypeStatement.query} WHERE Rest_Uname = $${setTypeStatement.nextIndex} RETURNING *`,
+						setTypeStatement.params.concat([req.session.user.uname])
+					);
+				} else {
+					updatedType = await client.query(
+						`UPDATE DELIVERY_PERSONS ${setTypeStatement.query} WHERE Del_Uname = $${setTypeStatement.nextIndex} RETURNING *`,
+						setTypeStatement.params.concat([req.session.user.uname])
+					);
+				}
+			}
+		}
 		await client.query('COMMIT');
 		res.send({
-			updatedUser: updatedUser.rows,
-			updatedType: updatedType.rows
+			updatedUser: updatedUser,
+			updatedType: updatedType
 		});
 	} catch (err) {
 		await client.query('ROLLBACK');

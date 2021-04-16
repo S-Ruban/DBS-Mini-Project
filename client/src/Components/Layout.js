@@ -17,7 +17,8 @@ import {
 	MenuItem,
 	FormControlLabel,
 	Switch,
-	Button
+	Button,
+	CircularProgress
 } from '@material-ui/core';
 import FastfoodIcon from '@material-ui/icons/Fastfood';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
@@ -25,9 +26,11 @@ import SearchIcon from '@material-ui/icons/Search';
 import HistoryIcon from '@material-ui/icons/History';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import FilterListIcon from '@material-ui/icons/FilterList';
+import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import { signout } from '../Redux/userSlice';
-import { changeDelAvail, setFilters } from '../Redux/varSlice';
+import { changeDelAvail, setFilters, setItems, setLoading } from '../Redux/varSlice';
 import FilterDialog from '../Components/Dialogs/FilterDialog';
+import CreateItemDialog from '../Components/Dialogs/CreateItemDialog';
 
 const useStyles = makeStyles((theme) => {
 	return {
@@ -93,11 +96,13 @@ const useStyles = makeStyles((theme) => {
 const Layout = ({ children }) => {
 	const classes = useStyles();
 	const user = useSelector((state) => state.user);
-	const cartCount = useSelector((state) => state.cart.count);
+	const cart = useSelector((state) => state.cart.cart);
 	const delAvail = useSelector((state) => state.var.delAvail);
 	const filters = useSelector((state) => state.var.filters);
+	const loading = useSelector((state) => state.var.loading);
 	const [anchorEl, setAnchorEl] = useState(null);
-	const [open, setOpen] = useState(false);
+	const [openFilters, setOpenFilters] = useState(false);
+	const [openCreateItem, setOpenCreateItem] = useState(false);
 	const [search, setSearch] = useState('');
 	const dispatch = useDispatch();
 	const history = useHistory();
@@ -120,6 +125,19 @@ const Layout = ({ children }) => {
 			console.log(err.response.data.message);
 		} finally {
 			setAnchorEl(null);
+		}
+	};
+	const handleCreateItem = async (item) => {
+		try {
+			setOpenCreateItem(false);
+			dispatch(setLoading(true));
+			await axios.post('/items', item);
+			const res = await axios.get('/items', { params: filters });
+			dispatch(setItems(res.data));
+			dispatch(setLoading(false));
+		} catch (err) {
+			dispatch(setLoading(false));
+			console.log(err.response.data.message);
 		}
 	};
 
@@ -159,22 +177,50 @@ const Layout = ({ children }) => {
 								variant='contained'
 								color='primary'
 								startIcon={<FilterListIcon />}
-								onClick={() => setOpen(true)}
+								onClick={() => setOpenFilters(true)}
 							>
 								Filters
 							</Button>
-							<FilterDialog onClose={() => setOpen(false)} open={open} />
+							<FilterDialog
+								onClose={() => setOpenFilters(false)}
+								open={openFilters}
+							/>
 						</>
 					)}
 					<div className={classes.grow}></div>
+					{loading && <CircularProgress color='secondary' />}
 					{user.type === 'customer' && (
 						<Tooltip title='Cart'>
-							<IconButton color='inherit'>
-								<Badge badgeContent={cartCount} color='secondary'>
+							<IconButton
+								color='inherit'
+								onClick={() => {
+									if (location.pathname !== '/cart') history.push('/cart');
+								}}
+							>
+								<Badge badgeContent={cart.length} color='secondary'>
 									<ShoppingCartIcon />
 								</Badge>
 							</IconButton>
 						</Tooltip>
+					)}
+					{user.type === 'restaurant' && (
+						<>
+							<Tooltip title='New Item'>
+								<IconButton
+									color='inherit'
+									onClick={() => {
+										setOpenCreateItem(true);
+									}}
+								>
+									<AddCircleOutlineIcon />
+								</IconButton>
+							</Tooltip>
+							<CreateItemDialog
+								open={openCreateItem}
+								onClose={() => setOpenCreateItem(false)}
+								handleSave={handleCreateItem}
+							/>
+						</>
 					)}
 					{user.type === 'delivery' && (
 						<FormControlLabel
@@ -196,7 +242,10 @@ const Layout = ({ children }) => {
 					)}
 					{user.uname && (
 						<Tooltip title='Order History'>
-							<IconButton className={classes.history}>
+							<IconButton
+								className={classes.history}
+								onClick={() => history.push('/orders')}
+							>
 								<HistoryIcon fontSize='inherit' />
 							</IconButton>
 						</Tooltip>
