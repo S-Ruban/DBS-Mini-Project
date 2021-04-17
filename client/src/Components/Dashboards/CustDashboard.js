@@ -7,7 +7,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import RestaurantCard from '../Cards/RestaurantCard';
 import ItemCard from '../Cards/ItemCard';
 import { emptyCart, setCart } from '../../Redux/cartSlice';
-import { setItems, setRestaurants } from '../../Redux/varSlice';
+import { setErrorBar, setItems, setRestaurants } from '../../Redux/varSlice';
 
 const useStyles = makeStyles((theme) => ({
 	item: {

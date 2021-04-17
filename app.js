@@ -65,6 +65,7 @@ app.post('/signout', auth, async (req, res) => {
 				false,
 				req.session.user.uname
 			]);
+			req.app.get('io').emit('restaurantOpen', false);
 		} else if (req.session.user.type === 'delivery') {
 			await pool.query('UPDATE DELIVERY_PERSONS SET isAvail = $1 WHERE Del_Uname = $2', [
 				false,

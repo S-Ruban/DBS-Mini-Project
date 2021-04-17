@@ -1,5 +1,5 @@
 const { makeWorkerUtils, run } = require('graphile-worker');
-const { getDistance: distance } = require('geolib');
+const { getDistance: distance, getCenter } = require('geolib');
 const pool = require('./Models/dbConfig');
 const { getSocketID } = require('./socket');
 const { getRestUname } = require('./Models/helpers');
@@ -44,9 +44,14 @@ const assignDelivery = async (payload) => {
 			}
 		});
 		const delCharge = Math.round(Math.max(5, 0.003 * dist));
+		const del_loc = { latitude: min.lat, longitude: min.long };
+		const center = getCenter(payload.cust_loc, payload.rest_loc, del_loc);
 		if (getSocketID(min.del_uname)) {
 			app.get('io').to(getSocketID(min.del_uname)).emit('deliveryQuery', {
 				delUname: min.del_uname,
+				del_loc,
+				center,
+				distance: dist,
 				delCharge,
 				payload
 			});

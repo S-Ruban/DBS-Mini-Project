@@ -6,9 +6,15 @@ import {
 	TableRow,
 	TableBody,
 	makeStyles,
-	Link
+	Link,
+	Button
 } from '@material-ui/core';
-import React from 'react';
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import ViewMapDialog from '../Dialogs/ViewMapDialog';
+import DoneIcon from '@material-ui/icons/Done';
+import { setErrorBar } from '../../Redux/varSlice';
+import axios from 'axios';
 
 const useStyles = makeStyles((theme) => ({
 	link: {
@@ -25,18 +31,96 @@ const useStyles = makeStyles((theme) => ({
 	}
 }));
 
-const OrderContentTable = ({ order_content, order_no }) => {
+const OrderContentTable = ({ order_content, order_no, order }) => {
 	const classes = useStyles();
+
+	const [openMap, setOpenMap] = useState(false);
+	const orderAvail = useSelector((state) => state.socket.orderAvail);
+	const user = useSelector((state) => state.user);
+	const dispatch = useDispatch();
+
+	const handleDelivery = async () => {
+		try {
+			await axios.post(`/orders/${order_no}`, { isdelivered: true });
+		} catch (err) {
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
+		}
+	};
+
+	const handlePaid = async () => {
+		try {
+			await axios.post(`/orders/${order_no}`, { ispaid: true });
+		} catch (err) {
+			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
+		}
+	};
 
 	return (
 		<TableContainer>
 			<Table className={classes.table}>
 				<TableHead>
-					<TableRow>
-						<TableCell colSpan={4} align='center' style={{ fontSize: '20pt' }}>
-							<b>Order #{order_no}</b>
-						</TableCell>
-					</TableRow>
+					{!orderAvail &&
+						!(user.type === 'customer' && !order.isdelivered) &&
+						!(user.type === 'delivery' && !order.ispaid) && (
+							<TableRow>
+								<TableCell colSpan={4} align='center' style={{ fontSize: '20pt' }}>
+									<b>Order #{order_no}</b>
+								</TableCell>
+							</TableRow>
+						)}
+					{orderAvail && (
+						<TableRow>
+							<TableCell colSpan={2} align='center' style={{ fontSize: '20pt' }}>
+								<b>Order #{order_no}</b>
+							</TableCell>
+							<TableCell colSpan={2} align='center' style={{ fontSize: '20pt' }}>
+								<Button
+									variant='contained'
+									color='primary'
+									onClick={() => setOpenMap(true)}
+								>
+									View Map
+								</Button>
+							</TableCell>
+							<ViewMapDialog open={openMap} setOpen={setOpenMap} />
+						</TableRow>
+					)}
+					{user.type === 'customer' && !order.isdelivered && (
+						<TableRow>
+							<TableCell colSpan={2} align='center' style={{ fontSize: '20pt' }}>
+								<b>Order #{order_no}</b>
+							</TableCell>
+							<TableCell colSpan={2} align='center' style={{ fontSize: '20pt' }}>
+								<Button
+									variant='contained'
+									color='primary'
+									startIcon={<DoneIcon />}
+									onClick={handleDelivery}
+								>
+									Delivered
+								</Button>
+							</TableCell>
+						</TableRow>
+					)}
+					{user.type === 'delivery' && !order.ispaid && (
+						<TableRow>
+							<TableCell colSpan={2} align='center' style={{ fontSize: '20pt' }}>
+								<b>Order #{order_no}</b>
+							</TableCell>
+							<TableCell colSpan={2} align='center' style={{ fontSize: '20pt' }}>
+								<Button
+									variant='contained'
+									color='primary'
+									startIcon={<DoneIcon />}
+									onClick={handlePaid}
+								>
+									Paid
+								</Button>
+							</TableCell>
+						</TableRow>
+					)}
 				</TableHead>
 				<TableHead>
 					<TableRow>

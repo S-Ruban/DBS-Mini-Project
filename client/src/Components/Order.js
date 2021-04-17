@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useHistory } from 'react-router';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import {
 	Card,
@@ -21,6 +21,7 @@ import {
 import OrderContentTable from './Tables/OrderContentTable';
 import CancelIcon from '@material-ui/icons/Cancel';
 import { setErrorBar } from '../Redux/varSlice';
+import { setOrderDetails } from '../Redux/socketSlice';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -50,10 +51,11 @@ const Order = () => {
 	const { order_no } = useParams();
 	const history = useHistory();
 
-	const [details, setDetails] = useState(null);
 	const [activeStep, setActiveStep] = useState(0);
 	const [open, setOpen] = useState(false);
 
+	const user = useSelector((state) => state.user);
+	const details = useSelector((state) => state.socket.orderDetails);
 	const dispatch = useDispatch();
 
 	const getActiveStep = (order) => {
@@ -82,10 +84,10 @@ const Order = () => {
 			try {
 				const res = await axios.get(`/orders/${order_no}`);
 				setActiveStep(getActiveStep(res.data.order));
-				setDetails(res.data);
+				dispatch(setOrderDetails(res.data));
 			} catch (err) {
 				history.replace('/orders');
-				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				if (err.response) dispatch(setErrorBar(err.response.data.message));
 				else console.log(err);
 			}
 		};
@@ -295,6 +297,7 @@ const Order = () => {
 						<OrderContentTable
 							order_content={details.orderContent}
 							order_no={order_no}
+							order={details.order}
 						/>
 					</Grid>
 					<Grid item>
@@ -317,14 +320,16 @@ const Order = () => {
 								</Button>
 							</DialogActions>
 						</Dialog>
-						<Button
-							variant='contained'
-							color='secondary'
-							startIcon={<CancelIcon />}
-							onClick={() => setOpen(true)}
-						>
-							Cancel order
-						</Button>
+						{user.type === 'customer' && (
+							<Button
+								variant='contained'
+								color='secondary'
+								startIcon={<CancelIcon />}
+								onClick={() => setOpen(true)}
+							>
+								Cancel order
+							</Button>
+						)}
 					</Grid>
 				</Grid>
 			</Container>

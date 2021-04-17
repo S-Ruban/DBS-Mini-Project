@@ -66,9 +66,33 @@ const RestDashboard = () => {
 				else console.log(err);
 			}
 		};
-
 		fetchData();
 	}, [filters, dispatch]);
+
+	const handlePrepared = async (order) => {
+		try {
+			const res = await axios.patch(`/orders/${order.orderno}`, { isprepared: true });
+			setPending(
+				pending.map((o) => {
+					if (o.orderno !== order.orderno) return o;
+					else return res.data;
+				})
+			);
+		} catch (err) {
+			if (err.response) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
+		}
+	};
+
+	const handleDispatched = async (order) => {
+		try {
+			await axios.patch(`/orders/${order.orderno}`, { isreceived: true });
+			setPending(pending.filter((o) => o.orderno !== order.orderno));
+		} catch (err) {
+			if (err.response) dispatch(setErrorBar(err.response.data.message));
+			else console.log(err);
+		}
+	};
 
 	const ItemsTab = () => {
 		return (
@@ -104,6 +128,7 @@ const RestDashboard = () => {
 						<IconButton
 							onClick={(e) => {
 								e.stopPropagation();
+								handlePrepared(order);
 								setPrepared(true);
 							}}
 							disabled={prepared}
@@ -112,7 +137,12 @@ const RestDashboard = () => {
 						</IconButton>
 					</Tooltip>
 					<Tooltip title='Dispatched'>
-						<IconButton onClick={(e) => e.stopPropagation()}>
+						<IconButton
+							onClick={(e) => {
+								e.stopPropagation();
+								handleDispatched(order);
+							}}
+						>
 							<DoneAllIcon fontSize='large' />
 						</IconButton>
 					</Tooltip>

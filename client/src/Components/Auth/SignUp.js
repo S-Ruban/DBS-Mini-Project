@@ -93,7 +93,13 @@ const SignUp = () => {
 			</Grid>
 			<Grid item>
 				<Typography variant='h5' component='h1'>
-					Sign Up As {type && `a ${type.charAt(0).toUpperCase() + type.slice(1)}`}
+					Sign Up As{' '}
+					{type &&
+						`a ${
+							type !== 'delivery'
+								? type.charAt(0).toUpperCase() + type.slice(1)
+								: 'Delivery Person'
+						}`}
 				</Typography>
 			</Grid>
 			<Grid item>

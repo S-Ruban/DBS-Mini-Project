@@ -40,6 +40,7 @@ router.post('/', async (req, res) => {
 					true,
 					credentials.uname
 				]);
+				req.app.get('io').emit('restaurantOpen', true);
 			}
 			res.status(202).send(req.session.user);
 		} else res.status(401).send({ message: 'Invalid Username or Password' });

@@ -74,7 +74,6 @@ router.patch('/', async (req, res) => {
 				patch.isAvail,
 				req.session.user.uname
 			]);
-			req.app.get('io').emit('deliveryAvail', patch.isAvail);
 			delete patch.isAvail;
 		}
 

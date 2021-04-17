@@ -125,7 +125,7 @@ const Cart = () => {
 									variant='contained'
 									color='primary'
 									startIcon={<DoneIcon />}
-									onClick={() => handlePlaceOrder(true)}
+									onClick={() => setMapOpen(true)}
 								>
 									Place order
 								</Button>

@@ -1,6 +1,7 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Route, Switch, Redirect, useHistory } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { io } from 'socket.io-client';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core';
 import './App.css';
 import { Auth, UnAuth } from './routes';
@@ -17,6 +18,9 @@ import Cart from './Components/Cart';
 import Orders from './Components/Orders';
 import Order from './Components/Order';
 import Restaurant from './Components/Restaurant';
+import { setSocket, setDelQuery, setOrderDetails, setOrderAvail } from './Redux/socketSlice';
+import axios from 'axios';
+import { setErrorBar, setItems, setRestaurants } from './Redux/varSlice';
 
 const theme = createMuiTheme({
 	typography: {
@@ -30,6 +34,77 @@ const theme = createMuiTheme({
 
 function App() {
 	const user = useSelector((state) => state.user);
+	const orderDetails = useSelector((state) => state.socket.orderDetails);
+	const filters = useSelector((state) => state.var.filters);
+	const dispatch = useDispatch();
+	const history = useHistory();
+
+	useEffect(() => {
+		const socket = io(process.env.REACT_APP_SERVER_URL);
+		socket.on('deliveryQuery', (details) => {
+			dispatch(setDelQuery({ open: true, details }));
+		});
+		socket.on('assigned', async (details) => {
+			if (details.payload.orderNo === orderDetails.order.orderno) {
+				try {
+					const res = await axios.get(`/orders/${details.payload.orderNo}`);
+					dispatch(setOrderDetails(res.data));
+				} catch (err) {
+					if (err.response) dispatch(setErrorBar(err.response.data.message));
+					else console.log(err);
+				}
+			}
+		});
+		for (let event in ['prepared', 'received', 'delivered', 'paid']) {
+			socket.on(event, async (details) => {
+				if (details.orderno === orderDetails.order.orderno) {
+					try {
+						const res = await axios.get(`/orders/${details.payload.orderNo}`);
+						dispatch(setOrderDetails(res.data));
+						if (event === 'paid' && user.type === 'delivery') {
+							dispatch(setOrderAvail(null));
+						}
+					} catch (err) {
+						if (err.response) dispatch(setErrorBar(err.response.data.message));
+						else console.log(err);
+					}
+				}
+			});
+		}
+		socket.on('delFailed', async (details) => {
+			try {
+				await axios.delete(`/orders/${details.payload.orderNo}`);
+				if (details.orderno === orderDetails.order.orderno) history.replace('/');
+				dispatch(setOrderDetails(null));
+			} catch (err) {
+				if (err.response) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
+			}
+		});
+		socket.on('restaurantOpen', async () => {
+			if (user.type === 'customer') {
+				let res = await axios.get('/restaurants', {
+					params: filters
+				});
+				dispatch(setRestaurants(res.data));
+				res = await axios.get('/items', {
+					params: filters
+				});
+				dispatch(setItems(res.data));
+			}
+		});
+		socket.on('itemAvail', async () => {
+			if (user.type === 'customer') {
+				const res = await axios.get('/items', {
+					params: filters
+				});
+				dispatch(setItems(res.data));
+			}
+		});
+		dispatch(setSocket(socket));
+		return () => socket.disconnect();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [dispatch]);
 
 	return (
 		<ThemeProvider theme={theme}>

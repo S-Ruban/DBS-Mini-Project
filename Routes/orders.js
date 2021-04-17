@@ -29,6 +29,12 @@ router.get('/', async (req, res) => {
 				})
 			);
 			res.send(result);
+		} else if (req.session.user.type === 'delivery' && req.query.check) {
+			const result = await pool.query(
+				'SELECT * FROM ORDERS WHERE isAssigned = $1 AND isPaid = $2 AND Del_Uname = $3',
+				[true, false, req.session.user.uname]
+			);
+			res.send(result.rows);
 		} else {
 			let whereClause, firstParam;
 			if (req.session.user.type === 'customer') {
@@ -177,7 +183,7 @@ router.patch('/:order_no', async (req, res) => {
 				true,
 				req.params.order_no
 			]);
-			if (req.body.isDelivered) {
+			if (req.body.isPaid) {
 				await pool.query('UPDATE DELIVERY_PERSONS SET isAvail = $1 WHERE Del_Uname = $2', [
 					true,
 					order.rows[0].del_uname
@@ -185,11 +191,17 @@ router.patch('/:order_no', async (req, res) => {
 			}
 
 			if (getSocketID(order.rows[0].cust_uname))
-				req.app.get('io').to(getSocketID(order.rows[0].cust_uname)).emit(eventType, true);
+				req.app
+					.get('io')
+					.to(getSocketID(order.rows[0].cust_uname))
+					.emit(eventType, order.rows[0]);
 			if (getSocketID(rest_uname))
-				req.app.get('io').to(getSocketID(rest_uname)).emit(eventType, true);
+				req.app.get('io').to(getSocketID(rest_uname)).emit(eventType, order.rows[0]);
 			if (getSocketID(order.rows[0].del_uname))
-				req.app.get('io').to(getSocketID(order.rows[0].del_uname)).emit(eventType, true);
+				req.app
+					.get('io')
+					.to(getSocketID(order.rows[0].del_uname))
+					.emit(eventType, order.rows[0]);
 
 			res.send(order.rows[0]);
 		} else res.status(403).send({ message: 'Unauthorized' });

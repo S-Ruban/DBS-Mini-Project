@@ -12,6 +12,15 @@ const cuisineData = [
 	'Arabian'
 ];
 
-const mealTypeData = ['Misc', 'Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Beverage', 'Chat'];
+const mealTypeData = [
+	'Misc',
+	'Breakfast',
+	'Lunch',
+	'Dinner',
+	'Snack',
+	'Dessert',
+	'Beverage',
+	'Chat'
+];
 
 export { cuisineData, mealTypeData };

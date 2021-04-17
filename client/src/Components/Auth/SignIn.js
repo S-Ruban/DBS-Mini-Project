@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { makeStyles } from '@material-ui/core/styles';
 import { Grid, Avatar, Button, Link, TextField, Typography } from '@material-ui/core';
@@ -38,6 +38,8 @@ const useStyles = makeStyles((theme) => ({
 const SignIn = () => {
 	const classes = useStyles();
 
+	const socket = useSelector((state) => state.socket.socket);
+
 	const [uname, setUname] = useState('');
 	const [pass, setPass] = useState('');
 	const [error, setError] = useState(false);
@@ -51,6 +53,7 @@ const SignIn = () => {
 			const credentials = { uname, pass };
 			res = await axios.post('/signin', credentials);
 			dispatch(signin(res.data));
+			socket.emit('signin', uname);
 			history.push('/dashboard');
 		} catch (err) {
 			console.log(err.response);

@@ -120,6 +120,7 @@ const Layout = ({ children }) => {
 	const successMessage = useSelector((state) => state.var.successMessage);
 	const infoBar = useSelector((state) => state.var.infoBar);
 	const infoMessage = useSelector((state) => state.var.infoMessage);
+	const orderAvail = useSelector((state) => state.socket.orderAvail);
 
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [openFilters, setOpenFilters] = useState(false);
@@ -312,6 +313,7 @@ const Layout = ({ children }) => {
 									/>
 								}
 								label='Taking Orders?'
+								disabled={orderAvail}
 							/>
 							<MapDialog
 								open={openMap}
