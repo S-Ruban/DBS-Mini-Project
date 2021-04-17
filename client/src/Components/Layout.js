@@ -37,12 +37,14 @@ import {
 	setItems,
 	setLoading,
 	setErrorBar,
-	setSuccessBar
+	setSuccessBar,
+	setInfoBar
 } from '../Redux/varSlice';
 import FilterDialog from '../Components/Dialogs/FilterDialog';
 import CreateItemDialog from '../Components/Dialogs/CreateItemDialog';
 import RateDialog from '../Components/Dialogs/RateDialog';
 import imageUpload from '../Firebase/imageUpload';
+import MapDialog from './Dialogs/MapDialog';
 
 const useStyles = makeStyles((theme) => {
 	return {
@@ -116,12 +118,16 @@ const Layout = ({ children }) => {
 	const errorMessage = useSelector((state) => state.var.errorMessage);
 	const successBar = useSelector((state) => state.var.successBar);
 	const successMessage = useSelector((state) => state.var.successMessage);
+	const infoBar = useSelector((state) => state.var.infoBar);
+	const infoMessage = useSelector((state) => state.var.infoMessage);
 
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [openFilters, setOpenFilters] = useState(false);
 	const [openCreateItem, setOpenCreateItem] = useState(false);
 	const [openRate, setOpenRate] = useState(false);
+	const [openMap, setOpenMap] = useState(false);
 	const [search, setSearch] = useState('');
+
 	const dispatch = useDispatch();
 	const history = useHistory();
 	const location = useLocation();
@@ -177,6 +183,19 @@ const Layout = ({ children }) => {
 			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
 			else console.log(err);
 		}
+	};
+	const handleDelAvail = async (coordinates) => {
+		setOpenMap(false);
+		if (coordinates) {
+			try {
+				await axios.patch('/profile', { type: coordinates });
+				dispatch(changeDelAvail(true));
+			} catch (err) {
+				if (err.response && err.response.data.message)
+					dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
+			}
+		} else dispatch(setInfoBar('Enter location to wait for orders'));
 	};
 
 	return (
@@ -281,17 +300,25 @@ const Layout = ({ children }) => {
 						</>
 					)}
 					{user.type === 'delivery' && (
-						<FormControlLabel
-							control={
-								<Switch
-									checked={delAvail}
-									onChange={(e) => {
-										dispatch(changeDelAvail(e.target.checked));
-									}}
-								/>
-							}
-							label='Taking Orders?'
-						/>
+						<>
+							<FormControlLabel
+								control={
+									<Switch
+										checked={delAvail}
+										onChange={(e) => {
+											if (e.target.checked) setOpenMap(true);
+											else dispatch(changeDelAvail(false));
+										}}
+									/>
+								}
+								label='Taking Orders?'
+							/>
+							<MapDialog
+								open={openMap}
+								setOpen={setOpenMap}
+								handleComplete={handleDelAvail}
+							/>
+						</>
 					)}
 					{user.uname && (
 						<Typography variant='h6' className={classes.uname}>
@@ -367,6 +394,21 @@ const Layout = ({ children }) => {
 					severity='success'
 				>
 					{successMessage}
+				</MuiAlert>
+			</Snackbar>
+			<Snackbar
+				open={infoBar}
+				autoHideDuration={4000}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+				onClose={() => dispatch(setInfoBar(''))}
+			>
+				<MuiAlert
+					elevation={6}
+					variant='filled'
+					onClose={() => dispatch(setInfoBar(''))}
+					severity='info'
+				>
+					{infoMessage}
 				</MuiAlert>
 			</Snackbar>
 		</div>

@@ -33,8 +33,8 @@ router.post('/', async (req, res) => {
 
 		if (user.type === 'customer') {
 			const customer = await client.query(
-				'INSERT INTO CUSTOMERS VALUES ($1, $2, $3, $4, $5) RETURNING *',
-				[user.uname, user.aline1, user.aline2, user.city, user.pin]
+				'INSERT INTO CUSTOMERS VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+				[user.uname, user.aline1, user.aline2, user.city, user.pin, user.lat, user.long]
 			);
 			result.customer = customer.rows;
 		} else if (user.type === 'restaurant') {
@@ -66,8 +66,8 @@ router.post('/', async (req, res) => {
 			});
 		} else {
 			const delivery = await client.query(
-				'INSERT INTO DELIVERY_PERSONS VALUES ($1, $2, $3, $4, $5)',
-				[user.uname, user.vno, user.vmodel, user.vcolour, false]
+				'INSERT INTO DELIVERY_PERSONS VALUES ($1, $2, $3, $4, $5, $6, $7)',
+				[user.uname, user.vno, user.vmodel, user.vcolour, false, user.lat, user.long]
 			);
 			result.delivery = delivery.rows;
 		}

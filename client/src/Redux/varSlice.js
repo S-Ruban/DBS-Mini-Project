@@ -8,6 +8,8 @@ export const varSlice = createSlice({
 		errorMessage: '',
 		successBar: false,
 		succesMessage: '',
+		infoBar: false,
+		infoMessage: '',
 		delAvail: false,
 		filters: {
 			name: null,
@@ -29,6 +31,10 @@ export const varSlice = createSlice({
 		setSuccessBar: (state, action) => {
 			state.successBar = !state.successBar;
 			state.successMessage = action.payload;
+		},
+		setInfoBar: (state, action) => {
+			state.infoBar = !state.infoBar;
+			state.infoMessage = action.payload;
 		},
 		changeDelAvail: (state, action) => {
 			state.delAvail = action.payload;
@@ -52,6 +58,7 @@ export const {
 	setItems,
 	setRestaurants,
 	setErrorBar,
-	setSuccessBar
+	setSuccessBar,
+	setInfoBar
 } = varSlice.actions;
 export default varSlice.reducer;

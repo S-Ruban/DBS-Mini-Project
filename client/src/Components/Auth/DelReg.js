@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router';
+import { useDispatch } from 'react-redux';
 import axios from 'axios';
+import { OpenStreetMapProvider } from 'leaflet-geosearch';
 import { makeStyles } from '@material-ui/core/styles';
 import { Grid, Button, TextField, Typography } from '@material-ui/core';
 import DoneIcon from '@material-ui/icons/Done';
 import HelpOutlineOutlinedIcon from '@material-ui/icons/HelpOutlineOutlined';
 import CloseOutlinedIcon from '@material-ui/icons/CloseOutlined';
+import { setErrorBar } from '../../Redux/varSlice';
 
 const useStyles = makeStyles((theme) => ({
 	paper: {
@@ -46,8 +49,11 @@ const DelReg = () => {
 	const [vno, setVno] = useState('');
 	const [vcolour, setVcolour] = useState('');
 	const [vmodel, setVmodel] = useState('');
+	const [city, setCity] = useState('');
 
 	const history = useHistory();
+
+	const dispatch = useDispatch();
 
 	const submitHandler = async (e) => {
 		e.preventDefault();
@@ -56,6 +62,17 @@ const DelReg = () => {
 			setPass('');
 			setConfirm('');
 		} else {
+			const address = city;
+			const provider = new OpenStreetMapProvider();
+			const results = await provider.search({ query: address });
+			let lat, long;
+			if (results.length) {
+				lat = results[0].y;
+				long = results[0].x;
+			} else {
+				lat = 13.006038;
+				long = 77.603421;
+			}
 			const details = {
 				type: 'delivery',
 				uname,
@@ -66,7 +83,9 @@ const DelReg = () => {
 				email,
 				vno,
 				vmodel,
-				vcolour
+				vcolour,
+				lat,
+				long
 			};
 			try {
 				await axios.post('http://localhost:5000/signup', details);
@@ -225,16 +244,29 @@ const DelReg = () => {
 						/>
 					</Grid>
 				</Grid>
-				<Grid item className={classes.formElement}>
-					<TextField
-						variant='outlined'
-						label='Vehicle Model'
-						required
-						fullWidth
-						onChange={(e) => {
-							setVmodel(e.target.value);
-						}}
-					/>
+				<Grid container className={classes.formElement} justify='space-between'>
+					<Grid item className={classes.adjacent}>
+						<TextField
+							variant='outlined'
+							label='Vehicle Model'
+							required
+							fullWidth
+							onChange={(e) => {
+								setVmodel(e.target.value);
+							}}
+						/>
+					</Grid>
+					<Grid item className={classes.adjacent}>
+						<TextField
+							variant='outlined'
+							label='City'
+							required
+							fullWidth
+							onChange={(e) => {
+								setCity(e.target.value);
+							}}
+						/>
+					</Grid>
 				</Grid>
 				<Grid item className={classes.formElement}>
 					<Button

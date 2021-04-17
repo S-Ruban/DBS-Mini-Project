@@ -21,10 +21,12 @@ import AddIcon from '@material-ui/icons/Add';
 import EditIcon from '@material-ui/icons/Edit';
 import SaveIcon from '@material-ui/icons/Save';
 import PersonIcon from '@material-ui/icons/Person';
+import LocationOnIcon from '@material-ui/icons/LocationOn';
 import { signout } from '../../Redux/userSlice';
 import { setErrorBar, setLoading, setSuccessBar } from '../../Redux/varSlice';
 import imageDelete from '../../Firebase/imageDelete';
 import imageUpload from '../../Firebase/imageUpload';
+import MapDialog from '../Dialogs/MapDialog';
 
 const useStyles = makeStyles((theme) => ({
 	paper: {
@@ -57,31 +59,32 @@ const RestProfile = () => {
 	const classes = useStyles();
 	const dispatch = useDispatch();
 
-	const [uname, setUname] = useState(null);
+	const [uname, setUname] = useState('');
 	const [oldpass, setOldpass] = useState('');
-	const [pass, setPass] = useState(null);
-	const [confirm, setConfirm] = useState(null);
+	const [pass, setPass] = useState('');
+	const [confirm, setConfirm] = useState('');
 	const [changepass, setChangepass] = useState(false);
 	const [error, setError] = useState(false);
-	const [firstname, setFirstname] = useState(null);
-	const [lastname, setLastname] = useState(null);
-	const [phone, setPhone] = useState(null);
-	const [email, setEmail] = useState(null);
-	const [fssai, setFssai] = useState(null);
-	const [rest_name, setRest_name] = useState(null);
-	const [img_link, setImg_link] = useState(null);
-	const [image, setImage] = useState(null);
-	const [aline1, setAline1] = useState(null);
-	const [aline2, setAline2] = useState(null);
-	const [city, setCity] = useState(null);
-	const [pin, setPin] = useState(null);
-	const [lat, setLat] = useState(null);
-	const [long, setLong] = useState(null);
+	const [firstname, setFirstname] = useState('');
+	const [lastname, setLastname] = useState('');
+	const [phone, setPhone] = useState('');
+	const [email, setEmail] = useState('');
+	const [fssai, setFssai] = useState('');
+	const [rest_name, setRest_name] = useState('');
+	const [img_link, setImg_link] = useState('');
+	const [image, setImage] = useState('');
+	const [aline1, setAline1] = useState('');
+	const [aline2, setAline2] = useState('');
+	const [city, setCity] = useState('');
+	const [pin, setPin] = useState('');
+	const [lat, setLat] = useState('');
+	const [long, setLong] = useState('');
 	const [isVeg, setIsVeg] = useState(false);
 	const [phones, setPhones] = useState([]);
-	const [newPhone, setNewPhone] = useState(null);
+	const [newPhone, setNewPhone] = useState('');
 	const [edit, setEdit] = useState(false);
 	const [open, setOpen] = useState(false);
+	const [openMap, setOpenMap] = useState(false);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -107,6 +110,14 @@ const RestProfile = () => {
 	}, []);
 
 	const history = useHistory();
+
+	const setLocation = (coordinates) => {
+		setOpenMap(false);
+		if (coordinates) {
+			setLat(coordinates.lat);
+			setLong(coordinates.long);
+		}
+	};
 
 	const submitHandler = async (e) => {
 		e.preventDefault();
@@ -511,8 +522,13 @@ const RestProfile = () => {
 						/>
 					</Grid>
 				</Grid>
-				<Grid container className={classes.formElement} justify='space-between'>
-					<Grid item className={classes.adjacent}>
+				<Grid
+					container
+					className={classes.formElement}
+					justify='space-between'
+					alignItems='center'
+				>
+					<Grid item>
 						<TextField
 							variant='outlined'
 							label='Latitude'
@@ -522,10 +538,10 @@ const RestProfile = () => {
 							onChange={(e) => {
 								setLat(e.target.value);
 							}}
-							disabled={!edit}
+							disabled
 						/>
 					</Grid>
-					<Grid item className={classes.adjacent}>
+					<Grid item>
 						<TextField
 							variant='outlined'
 							label='Longitude'
@@ -535,9 +551,20 @@ const RestProfile = () => {
 							onChange={(e) => {
 								setLong(e.target.value);
 							}}
-							disabled={!edit}
+							disabled
 						/>
 					</Grid>
+					<Grid item>
+						<Button
+							variant='contained'
+							color='primary'
+							startIcon={<LocationOnIcon />}
+							onClick={() => setOpenMap(true)}
+						>
+							Change location
+						</Button>
+					</Grid>
+					<MapDialog open={openMap} setOpen={setOpenMap} handleComplete={setLocation} />
 				</Grid>
 				<Grid
 					container

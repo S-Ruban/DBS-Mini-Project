@@ -14,7 +14,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import CartTable from './Tables/CartTable';
 import DoneIcon from '@material-ui/icons/Done';
 import { emptyCart, setCart } from '../Redux/cartSlice';
-import { setErrorBar } from '../Redux/varSlice';
+import { setErrorBar, setInfoBar, setSuccessBar } from '../Redux/varSlice';
 import MapDialog from './Dialogs/MapDialog';
 
 const useStyles = makeStyles((theme) => ({
@@ -31,7 +31,6 @@ const Cart = () => {
 
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [mapOpen, setMapOpen] = useState(false);
-	const [coordinates, setCoordinates] = useState(null);
 
 	const cart = useSelector((state) => state.cart.cart);
 	const dispatch = useDispatch();
@@ -50,21 +49,18 @@ const Cart = () => {
 		fetchData();
 	}, [dispatch]);
 
-	const handlePlaceOrder = async (dialog) => {
-		setMapOpen(dialog);
-		if (!dialog) {
-			if (coordinates) {
-				try {
-					await axios.patch('/profile', { type: coordinates });
-					await axios.post('/cart');
-					dispatch(emptyCart());
-					console.log('Order Placed');
-				} catch (err) {
-					if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
-					else console.log(err);
-				}
-			} else console.log('Enter location to place order');
-		}
+	const handlePlaceOrder = async (coordinates) => {
+		if (coordinates) {
+			try {
+				await axios.patch('/profile', { type: coordinates });
+				await axios.post('/cart');
+				dispatch(emptyCart());
+				dispatch(setSuccessBar('Order Placed!'));
+			} catch (err) {
+				if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
+			}
+		} else dispatch(setInfoBar('Enter location to place order'));
 	};
 
 	const handleDeleteCart = async (confirm) => {
@@ -136,8 +132,8 @@ const Cart = () => {
 							</Grid>
 							<MapDialog
 								open={mapOpen}
-								setCoordinates={setCoordinates}
-								onClose={handlePlaceOrder}
+								setOpen={setMapOpen}
+								handleComplete={handlePlaceOrder}
 							/>
 							<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
 								<DialogTitle>Are you sure you want to empty the cart?</DialogTitle>

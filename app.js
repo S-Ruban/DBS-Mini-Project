@@ -49,12 +49,6 @@ const sessionConfig = {
 app.use(express.json());
 app.use(session(sessionConfig));
 
-app.get('/', (req, res) => {
-	if (req.session && req.session.user)
-		res.send({ endpoint: '/dashboard', user: req.session.user });
-	else res.send({ endpoint: '/signin' });
-});
-
 app.use('/signin', unauth, signin);
 app.use('/signup', unauth, signup);
 app.use('/profile', auth, profile);
@@ -87,6 +81,29 @@ app.post('/signout', auth, async (req, res) => {
 
 app.get('/session', (req, res) => {
 	res.send({ user: req.session.user });
+});
+
+app.get('/location', auth, async (req, res) => {
+	try {
+		let from, where;
+		if (req.session.user.type === 'customer') {
+			from = 'CUSTOMERS';
+			where = 'Cust_Uname';
+		} else if (req.session.user.type === 'restaurant') {
+			from = 'RESTAURANTS';
+			where = 'Rest_Uname';
+		} else {
+			from = 'DELIVERY_PERSONS';
+			where = 'Del_Uname';
+		}
+		const result = await pool.query(`SELECT Lat, Long FROM ${from} WHERE ${where} = $1`, [
+			req.session.user.uname
+		]);
+		res.send(result.rows[0]);
+	} catch (err) {
+		console.log(err.stack);
+		res.status(500).send({ stack: err.stack, message: err.message });
+	}
 });
 
 app.use((req, res) => {

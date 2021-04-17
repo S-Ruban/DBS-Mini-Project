@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router';
 import axios from 'axios';
+import { OpenStreetMapProvider } from 'leaflet-geosearch';
 import { makeStyles } from '@material-ui/core/styles';
 import { Grid, Button, TextField, Typography } from '@material-ui/core';
 import DoneIcon from '@material-ui/icons/Done';
@@ -57,6 +58,17 @@ const CustReg = () => {
 			setPass('');
 			setConfirm('');
 		} else {
+			const address = aline1 + aline2 + city + pin;
+			const provider = new OpenStreetMapProvider();
+			const results = await provider.search({ query: address });
+			let lat, long;
+			if (results.length) {
+				lat = results[0].y;
+				long = results[0].x;
+			} else {
+				lat = 13.006038;
+				long = 77.603421;
+			}
 			const details = {
 				type: 'customer',
 				uname,
@@ -68,7 +80,9 @@ const CustReg = () => {
 				aline1,
 				aline2,
 				city,
-				pin
+				pin,
+				lat,
+				long
 			};
 			const res = await axios.post('http://localhost:5000/signup', details);
 			if (res.status === 202) {
