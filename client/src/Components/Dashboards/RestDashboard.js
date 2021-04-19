@@ -58,7 +58,8 @@ const RestDashboard = () => {
 				let res = await axios.get('/items', { params: filters });
 				dispatch(setItems(res.data));
 				const orders = await axios.get('/orders', { params: { pending: true } });
-				setPending(orders.data);
+				console.log(orders.data.orders);
+				setPending(orders.data.orders);
 				res = await axios.get(`/ratings/1`);
 				setRatings(res.data);
 			} catch (err) {
@@ -71,13 +72,7 @@ const RestDashboard = () => {
 
 	const handlePrepared = async (order) => {
 		try {
-			const res = await axios.patch(`/orders/${order.orderno}`, { isprepared: true });
-			setPending(
-				pending.map((o) => {
-					if (o.orderno !== order.orderno) return o;
-					else return res.data;
-				})
-			);
+			await axios.patch(`/orders/${order.orderno}`, { isprepared: true });
 		} catch (err) {
 			if (err.response) dispatch(setErrorBar(err.response.data.message));
 			else console.log(err);

@@ -21,6 +21,7 @@ export const socketSlice = createSlice({
 			state.orderAvail = action.payload;
 		},
 		setOrderDetails: (state, action) => {
+			console.log('SETTING ORDER DETAILS', action.payload);
 			state.orderDetails = action.payload;
 		}
 	}

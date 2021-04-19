@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Grid, Typography } from '@material-ui/core';
 import { setErrorBar } from '../../Redux/varSlice';
 import { setOrderAvail } from '../../Redux/socketSlice';
+import DelQueryDialog from '../Dialogs/DelQueryDialog';
 
 const DelDashboard = () => {
 	const delAvail = useSelector((state) => state.var.delAvail);
@@ -40,6 +41,7 @@ const DelDashboard = () => {
 				)}
 				{orderAvail && <Redirect to={`/orders/${orderAvail}`} />}
 			</Grid>
+			<DelQueryDialog />
 		</Grid>
 	);
 };

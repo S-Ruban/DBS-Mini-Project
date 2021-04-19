@@ -74,7 +74,9 @@ const OrderHistoryTable = ({ orders }) => {
 										: 'Yet to be assigned'}
 								</StyledTableCell>
 								<StyledTableCell>{order.quantity}</StyledTableCell>
-								<StyledTableCell>{order.price}</StyledTableCell>
+								<StyledTableCell>
+									{parseFloat(order.price) + parseFloat(order.del_charge)}
+								</StyledTableCell>
 							</TableRow>
 						);
 					})}

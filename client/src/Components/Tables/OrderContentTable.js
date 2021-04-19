@@ -15,6 +15,7 @@ import ViewMapDialog from '../Dialogs/ViewMapDialog';
 import DoneIcon from '@material-ui/icons/Done';
 import { setErrorBar } from '../../Redux/varSlice';
 import axios from 'axios';
+import { useHistory } from 'react-router';
 
 const useStyles = makeStyles((theme) => ({
 	link: {
@@ -39,9 +40,11 @@ const OrderContentTable = ({ order_content, order_no, order }) => {
 	const user = useSelector((state) => state.user);
 	const dispatch = useDispatch();
 
+	const history = useHistory();
+
 	const handleDelivery = async () => {
 		try {
-			await axios.post(`/orders/${order_no}`, { isdelivered: true });
+			await axios.patch(`/orders/${order_no}`, { isdelivered: true });
 		} catch (err) {
 			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
 			else console.log(err);
@@ -50,7 +53,8 @@ const OrderContentTable = ({ order_content, order_no, order }) => {
 
 	const handlePaid = async () => {
 		try {
-			await axios.post(`/orders/${order_no}`, { ispaid: true });
+			await axios.patch(`/orders/${order_no}`, { ispaid: true });
+			history.push('/');
 		} catch (err) {
 			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
 			else console.log(err);
@@ -61,21 +65,23 @@ const OrderContentTable = ({ order_content, order_no, order }) => {
 		<TableContainer>
 			<Table className={classes.table}>
 				<TableHead>
-					{!orderAvail &&
-						!(user.type === 'customer' && !order.isdelivered) &&
-						!(user.type === 'delivery' && !order.ispaid) && (
-							<TableRow>
-								<TableCell colSpan={4} align='center' style={{ fontSize: '20pt' }}>
-									<b>Order #{order_no}</b>
-								</TableCell>
-							</TableRow>
-						)}
+					{!orderAvail && !(user.type === 'customer' && !order.isdelivered) && (
+						<TableRow>
+							<TableCell colSpan={4} align='center' style={{ fontSize: '20pt' }}>
+								<b>Order #{order_no}</b>
+							</TableCell>
+						</TableRow>
+					)}
 					{orderAvail && (
 						<TableRow>
 							<TableCell colSpan={2} align='center' style={{ fontSize: '20pt' }}>
 								<b>Order #{order_no}</b>
 							</TableCell>
-							<TableCell colSpan={2} align='center' style={{ fontSize: '20pt' }}>
+							<TableCell
+								colSpan={order.isdelivered ? 1 : 2}
+								align='center'
+								style={{ fontSize: '20pt' }}
+							>
 								<Button
 									variant='contained'
 									color='primary'
@@ -84,6 +90,18 @@ const OrderContentTable = ({ order_content, order_no, order }) => {
 									View Map
 								</Button>
 							</TableCell>
+							{order.isdelivered && (
+								<TableCell align='center' style={{ fontSize: '20pt' }}>
+									<Button
+										variant='contained'
+										color='primary'
+										startIcon={<DoneIcon />}
+										onClick={handlePaid}
+									>
+										Paid
+									</Button>
+								</TableCell>
+							)}
 							<ViewMapDialog open={openMap} setOpen={setOpenMap} />
 						</TableRow>
 					)}
@@ -100,23 +118,6 @@ const OrderContentTable = ({ order_content, order_no, order }) => {
 									onClick={handleDelivery}
 								>
 									Delivered
-								</Button>
-							</TableCell>
-						</TableRow>
-					)}
-					{user.type === 'delivery' && !order.ispaid && (
-						<TableRow>
-							<TableCell colSpan={2} align='center' style={{ fontSize: '20pt' }}>
-								<b>Order #{order_no}</b>
-							</TableCell>
-							<TableCell colSpan={2} align='center' style={{ fontSize: '20pt' }}>
-								<Button
-									variant='contained'
-									color='primary'
-									startIcon={<DoneIcon />}
-									onClick={handlePaid}
-								>
-									Paid
 								</Button>
 							</TableCell>
 						</TableRow>
@@ -162,6 +163,13 @@ const OrderContentTable = ({ order_content, order_no, order }) => {
 						);
 					})}
 				</TableBody>
+				<TableRow>
+					<TableCell colspan={3} className={classes.text}>
+						<i>Delivery charges</i>
+					</TableCell>
+					<TableCell className={classes.text}>{order.del_charge}</TableCell>
+					<TableCell className={classes.text}></TableCell>
+				</TableRow>
 				<TableHead>
 					<TableRow>
 						<TableCell className={classes.text}>
@@ -181,7 +189,7 @@ const OrderContentTable = ({ order_content, order_no, order }) => {
 								{order_content.reduce(
 									(price, item) => price + item.price * item.quantity,
 									0
-								)}
+								) + parseFloat(order.del_charge)}
 							</b>
 						</TableCell>
 						<TableCell className={classes.text}></TableCell>

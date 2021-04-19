@@ -55,6 +55,7 @@ router.get('/', async (req, res) => {
 				query += ` AND Mealtype IN (${mealtypecount.join(',')})`;
 				params = params.concat(req.query.mealTypes);
 			}
+			query += ' ORDER BY Price';
 			const items = await pool.query(query, params);
 			res.send(items.rows);
 		} else res.status(403).send({ message: 'Unauthorized' });

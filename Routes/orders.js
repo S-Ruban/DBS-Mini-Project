@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
 			const orders = await pool.query(
 				`
 				SELECT OrderNo, OrderTime, isPrepared, Cust_FirstName AS Customer
-				FROM (SELECT * FROM ORDERS WHERE FSSAI = $1 AND isDelivered = $2) AS RESTAURANT 
+				FROM (SELECT * FROM ORDERS WHERE FSSAI = $1 AND isReceived = $2) AS RESTAURANT 
 						NATURAL JOIN (SELECT Uname AS Cust_Uname, FirstName AS Cust_FirstName FROM USERS) AS CUSTOMER_NAME 
 				`,
 				[await getFSSAI(req.session.user.uname), false]
@@ -28,7 +28,8 @@ router.get('/', async (req, res) => {
 					return { ...order, contents: contents.rows };
 				})
 			);
-			res.send(result);
+			console.log('RESULT', result);
+			res.send({ orders: result });
 		} else if (req.session.user.type === 'delivery' && req.query.check) {
 			const result = await pool.query(
 				'SELECT * FROM ORDERS WHERE isAssigned = $1 AND isPaid = $2 AND Del_Uname = $3',
@@ -165,24 +166,26 @@ router.patch('/:order_no', async (req, res) => {
 			const rest_uname = await getRestUname(order.rows[0].fssai);
 			let eventType = null,
 				columnType = null;
-			if (req.body.isPrepared) {
+			if (req.body.isprepared) {
 				eventType = 'prepared';
 				columnType = 'isPrepared';
-			} else if (req.body.isReceived) {
+			} else if (req.body.isreceived) {
 				eventType = 'received';
 				columnType = 'isReceived';
-			} else if (req.body.isDelivered) {
+			} else if (req.body.isdelivered) {
 				eventType = 'delivered';
 				columnType = 'isDelivered';
-			} else if (req.body.isPaid) {
+			} else if (req.body.ispaid) {
 				eventType = 'paid';
 				columnType = 'isPaid';
 			}
 
-			order = await pool.query(`UPDATE ORDERS SET ${columnType} = $1 WHERE OrderNo = $2`, [
-				true,
-				req.params.order_no
-			]);
+			console.log({ eventType, columnType });
+
+			order = await pool.query(
+				`UPDATE ORDERS SET ${columnType} = $1 WHERE OrderNo = $2 RETURNING *`,
+				[true, req.params.order_no]
+			);
 			if (req.body.isPaid) {
 				await pool.query('UPDATE DELIVERY_PERSONS SET isAvail = $1 WHERE Del_Uname = $2', [
 					true,
@@ -190,11 +193,13 @@ router.patch('/:order_no', async (req, res) => {
 				]);
 			}
 
-			if (getSocketID(order.rows[0].cust_uname))
+			if (getSocketID(order.rows[0].cust_uname)) {
 				req.app
 					.get('io')
 					.to(getSocketID(order.rows[0].cust_uname))
 					.emit(eventType, order.rows[0]);
+				console.log('Sent', eventType);
+			}
 			if (getSocketID(rest_uname))
 				req.app.get('io').to(getSocketID(rest_uname)).emit(eventType, order.rows[0]);
 			if (getSocketID(order.rows[0].del_uname))

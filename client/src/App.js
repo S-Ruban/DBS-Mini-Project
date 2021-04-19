@@ -41,13 +41,17 @@ function App() {
 
 	useEffect(() => {
 		const socket = io(process.env.REACT_APP_SERVER_URL);
+		if (user) socket.emit('signin', user.uname);
 		socket.on('deliveryQuery', (details) => {
 			dispatch(setDelQuery({ open: true, details }));
 		});
 		socket.on('assigned', async (details) => {
-			if (details.payload.orderNo === orderDetails.order.orderno) {
+			console.log('ASSIGNED DETAILS', details);
+			console.log('ORDERDETAILS', orderDetails);
+			if (orderDetails && details.order.orderno === orderDetails.order.orderno) {
 				try {
-					const res = await axios.get(`/orders/${details.payload.orderNo}`);
+					const res = await axios.get(`/orders/${details.order.orderno}`);
+					console.log('ASSIGNED ORDER', res.data);
 					dispatch(setOrderDetails(res.data));
 				} catch (err) {
 					if (err.response) dispatch(setErrorBar(err.response.data.message));
@@ -55,27 +59,59 @@ function App() {
 				}
 			}
 		});
-		for (let event in ['prepared', 'received', 'delivered', 'paid']) {
-			socket.on(event, async (details) => {
-				if (details.orderno === orderDetails.order.orderno) {
-					try {
-						const res = await axios.get(`/orders/${details.payload.orderNo}`);
-						dispatch(setOrderDetails(res.data));
-						if (event === 'paid' && user.type === 'delivery') {
-							dispatch(setOrderAvail(null));
-						}
-					} catch (err) {
-						if (err.response) dispatch(setErrorBar(err.response.data.message));
-						else console.log(err);
-					}
+		socket.on('prepared', async (details) => {
+			console.log(orderDetails, details);
+			if (orderDetails && details.orderno === orderDetails.order.orderno) {
+				try {
+					const res = await axios.get(`/orders/${details.orderno}`);
+					dispatch(setOrderDetails(res.data));
+				} catch (err) {
+					if (err.response) dispatch(setErrorBar(err.response.data.message));
+					else console.log(err);
 				}
-			});
-		}
+			}
+		});
+		socket.on('received', async (details) => {
+			if (orderDetails && details.orderno === orderDetails.order.orderno) {
+				try {
+					const res = await axios.get(`/orders/${details.orderno}`);
+					dispatch(setOrderDetails(res.data));
+				} catch (err) {
+					if (err.response) dispatch(setErrorBar(err.response.data.message));
+					else console.log(err);
+				}
+			}
+		});
+		socket.on('delivered', async (details) => {
+			if (orderDetails && details.orderno === orderDetails.order.orderno) {
+				try {
+					const res = await axios.get(`/orders/${details.orderno}`);
+					dispatch(setOrderDetails(res.data));
+				} catch (err) {
+					if (err.response) dispatch(setErrorBar(err.response.data.message));
+					else console.log(err);
+				}
+			}
+		});
+		socket.on('paid', async (details) => {
+			if (orderDetails && details.orderno === orderDetails.order.orderno) {
+				try {
+					const res = await axios.get(`/orders/${details.orderno}`);
+					dispatch(setOrderDetails(res.data));
+					if (user.type === 'delivery') dispatch(setOrderAvail(null));
+				} catch (err) {
+					if (err.response) dispatch(setErrorBar(err.response.data.message));
+					else console.log(err);
+				}
+			}
+		});
 		socket.on('delFailed', async (details) => {
 			try {
 				await axios.delete(`/orders/${details.payload.orderNo}`);
-				if (details.orderno === orderDetails.order.orderno) history.replace('/');
-				dispatch(setOrderDetails(null));
+				if (orderDetails && details.orderno === orderDetails.order.orderno) {
+					history.replace('/');
+					dispatch(setOrderDetails(null));
+				}
 			} catch (err) {
 				if (err.response) dispatch(setErrorBar(err.response.data.message));
 				else console.log(err);
@@ -103,8 +139,7 @@ function App() {
 		});
 		dispatch(setSocket(socket));
 		return () => socket.disconnect();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dispatch]);
+	}, [dispatch, filters, history, orderDetails, user]);
 
 	return (
 		<ThemeProvider theme={theme}>

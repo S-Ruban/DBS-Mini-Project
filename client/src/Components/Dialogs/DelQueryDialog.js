@@ -19,91 +19,97 @@ const DelQueryDialog = () => {
 	const socket = useSelector((state) => state.socket.socket);
 	const dispatch = useDispatch();
 
+	if (open) console.log(details);
+
 	return (
-		<Dialog
-			open={open}
-			onClose={() => {
-				socket.emit('delRejected', details);
-				dispatch(setDelQuery({ open: false, details: null }));
-			}}
-		>
-			<DialogTitle>
-				<Typography variant='h6'>Order available</Typography>
-			</DialogTitle>
-			<DialogContent>
-				<MapContainer
-					center={[details.center.latitude, details.center.longitude]}
-					zoom={14}
-					scrollWheelZoom={false}
-					style={{ height: '40vh', width: '25vw' }}
-				>
-					<TileLayer
-						attribution='Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
-						url='https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}'
-						maxZoom={18}
-						id='mapbox/streets-v11'
-						tileSize={512}
-						zoomOffset={-1}
-						accessToken={process.env.REACT_APP_MAPBOX}
-					/>
-					<Marker
-						position={[
-							details.payload.cust_loc.latitude,
-							details.payload.cust_loc.longitude
-						]}
-						title='Customer'
-					/>
-					<Marker
-						position={[
-							details.payload.rest_loc.latitude,
-							details.payload.rest_loc.longitude
-						]}
-						title='Restaurant'
-					/>
-					<Marker
-						position={[details.del_loc.latitude, details.del_loc.longitude]}
-						title='You'
-					/>
-					<Polyline
-						pathOptions={{ color: 'purple' }}
-						positions={[
-							[details.payload.cust_loc.latitude, details.payload.cust_loc.longitude],
-							[details.payload.rest_loc.latitude, details.payload.rest_loc.longitude],
-							[details.del_loc.latitude, details.del_loc.longitude]
-						]}
-					/>
-				</MapContainer>
-				<Typography variant='h6'>
-					Delivery charges = {details.delCharge} &nbsp;&nbsp;&nbsp; Distance ={' '}
-					{details.distance / 1000} km
-				</Typography>
-			</DialogContent>
-			<DialogActions>
-				<Button
-					variant='contained'
-					startIcon={<DoneIcon />}
-					onClick={() => {
-						socket.emit('delAccepted', details);
-						dispatch(setDelQuery({ open: false, details }));
-						dispatch(setOrderAvail(details.payload.orderNo));
-					}}
-					color='primary'
-				>
-					Accept
-				</Button>
-				<Button
-					variant='contained'
-					startIcon={<CancelIcon />}
-					onClick={() => {
+		<>
+			{details && (
+				<Dialog
+					open={open}
+					onClose={() => {
 						socket.emit('delRejected', details);
 						dispatch(setDelQuery({ open: false, details: null }));
 					}}
-					color='secondary'
 				>
-					Reject
-				</Button>
-			</DialogActions>
-		</Dialog>
+					<DialogTitle>
+						<Typography variant='h6'>Order available</Typography>
+					</DialogTitle>
+					<DialogContent>
+						<MapContainer
+							center={[details.center.latitude, details.center.longitude]}
+							zoom={14}
+							scrollWheelZoom={false}
+							style={{ height: '50vh', width: '35vw' }}
+						>
+							<TileLayer
+								attribution='Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
+								url='https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}'
+								maxZoom={18}
+								id='mapbox/streets-v11'
+								tileSize={512}
+								zoomOffset={-1}
+								accessToken={process.env.REACT_APP_MAPBOX}
+							/>
+							<Marker
+								position={[
+									details.payload.cust_loc.lat,
+									details.payload.cust_loc.long
+								]}
+								title='Customer'
+							/>
+							<Marker
+								position={[
+									details.payload.rest_loc.lat,
+									details.payload.rest_loc.long
+								]}
+								title='Restaurant'
+							/>
+							<Marker
+								position={[details.del_loc.latitude, details.del_loc.longitude]}
+								title='You'
+							/>
+							<Polyline
+								pathOptions={{ color: 'purple' }}
+								positions={[
+									[details.payload.cust_loc.lat, details.payload.cust_loc.long],
+									[details.payload.rest_loc.lat, details.payload.rest_loc.long],
+									[details.del_loc.latitude, details.del_loc.longitude]
+								]}
+							/>
+						</MapContainer>
+						<Typography variant='h6'>
+							Delivery charges = {details.delCharge} &nbsp;&nbsp;&nbsp; Distance ={' '}
+							{details.distance / 1000} km
+						</Typography>
+					</DialogContent>
+					<DialogActions>
+						<Button
+							variant='contained'
+							startIcon={<DoneIcon />}
+							onClick={async () => {
+								socket.emit('delAccepted', details);
+								dispatch(setDelQuery({ open: false, details }));
+								dispatch(setOrderAvail(details.payload.orderNo));
+							}}
+							color='primary'
+						>
+							Accept
+						</Button>
+						<Button
+							variant='contained'
+							startIcon={<CancelIcon />}
+							onClick={() => {
+								socket.emit('delRejected', details);
+								dispatch(setDelQuery({ open: false, details: null }));
+							}}
+							color='secondary'
+						>
+							Reject
+						</Button>
+					</DialogActions>
+				</Dialog>
+			)}
+		</>
 	);
 };
 

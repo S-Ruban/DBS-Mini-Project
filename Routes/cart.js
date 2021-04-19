@@ -38,11 +38,11 @@ router.post('/', async (req, res) => {
 			);
 
 			const customer = await client.query(
-				'SELECT lat as latitutde, long as longitude FROM CUSTOMERS WHERE Cust_Uname = $1',
+				'SELECT lat, long FROM CUSTOMERS WHERE Cust_Uname = $1',
 				[cart.rows[0].cust_uname]
 			);
 			const restaurant = await client.query(
-				'SELECT lat as latitude, long as longitude FROM RESTAURANTS WHERE FSSAI = $1',
+				'SELECT lat, long FROM RESTAURANTS WHERE FSSAI = $1',
 				[cart.rows[0].fssai]
 			);
 			await req.app.get('workerUtils').addJob(

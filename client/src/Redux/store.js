@@ -12,7 +12,11 @@ const makeStore = (preloadedState) => {
 			var: varReducer,
 			socket: socketReducer
 		},
-		preloadedState
+		preloadedState,
+		middleware: (getDefaultMiddleware) =>
+			getDefaultMiddleware({
+				serializableCheck: false
+			})
 	});
 };
 

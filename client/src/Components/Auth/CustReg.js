@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router';
+import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import { OpenStreetMapProvider } from 'leaflet-geosearch';
 import { makeStyles } from '@material-ui/core/styles';
@@ -7,6 +8,8 @@ import { Grid, Button, TextField, Typography } from '@material-ui/core';
 import DoneIcon from '@material-ui/icons/Done';
 import HelpOutlineOutlinedIcon from '@material-ui/icons/HelpOutlineOutlined';
 import CloseOutlinedIcon from '@material-ui/icons/CloseOutlined';
+import userSchema from '../../Validation/UserVal';
+import { setErrorBar, setSuccessBar } from '../../Redux/varSlice';
 
 const useStyles = makeStyles((theme) => ({
 	paper: {
@@ -50,52 +53,76 @@ const CustReg = () => {
 	const [pin, setPin] = useState('');
 
 	const history = useHistory();
+	const dispatch = useDispatch();
 
 	const submitHandler = async (e) => {
 		e.preventDefault();
-		if (pass !== confirm) {
-			setError(true);
-			setPass('');
-			setConfirm('');
-		} else {
-			const address = aline1 + aline2 + city + pin;
-			const provider = new OpenStreetMapProvider();
-			const results = await provider.search({ query: address });
-			let lat, long;
-			if (results.length) {
-				lat = results[0].y;
-				long = results[0].x;
-			} else {
-				lat = 13.006038;
-				long = 77.603421;
-			}
-			const details = {
-				type: 'customer',
+		try {
+			let result = userSchema.validate({
 				uname,
 				pass,
+				confirm,
 				firstname,
 				lastname,
 				phone,
-				email,
-				aline1,
-				aline2,
-				city,
-				pin,
-				lat,
-				long
-			};
-			const res = await axios.post('http://localhost:5000/signup', details);
-			if (res.status === 202) {
+				email
+			});
+			if (result.error) {
+				dispatch(setErrorBar(result.error.message));
+			} else {
+				const address = aline1 + aline2 + city + pin;
+				const provider = new OpenStreetMapProvider();
+				const results = await provider.search({ query: address });
+				let lat, long;
+				if (results.length) {
+					lat = results[0].y;
+					long = results[0].x;
+				} else {
+					lat = 13.006038;
+					long = 77.603421;
+				}
+				const details = {
+					type: 'customer',
+					uname,
+					pass,
+					firstname,
+					lastname,
+					phone,
+					email,
+					aline1,
+					aline2,
+					city,
+					pin,
+					lat,
+					long
+				};
+				await axios.post('http://localhost:5000/signup', details);
+				dispatch(setSuccessBar('Created account!'));
 				history.push('/signin');
-			} else console.log(res.data.message);
+			}
+		} catch (err) {
+			if (err.response && err.response.data.message)
+				dispatch(setErrorBar(err.response.data.message));
+			else dispatch(setErrorBar(err.message));
 		}
 	};
 
 	const checkUname = async (e) => {
-		if (uname !== '') {
-			const res = await axios.get('http://localhost:5000/signup', { params: { uname } });
-			if (res.data.isTaken) setUnameStatus('TAKEN');
-			else setUnameStatus('OK');
+		try {
+			const result = userSchema.extract('uname').validate(uname);
+			console.log(result);
+			if (result.error) {
+				console.log(result);
+				dispatch(setErrorBar(result.error.message));
+			} else {
+				const res = await axios.get('http://localhost:5000/signup', { params: { uname } });
+				if (res.data.isTaken) setUnameStatus('TAKEN');
+				else setUnameStatus('OK');
+			}
+		} catch (err) {
+			if (err.response && err.response.data.message)
+				dispatch(setErrorBar(err.response.data.message));
+			else dispatch(setErrorBar(err.message));
 		}
 	};
 

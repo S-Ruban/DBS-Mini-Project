@@ -20,8 +20,8 @@ import {
 } from '@material-ui/core';
 import OrderContentTable from './Tables/OrderContentTable';
 import CancelIcon from '@material-ui/icons/Cancel';
-import { setErrorBar } from '../Redux/varSlice';
-import { setOrderDetails } from '../Redux/socketSlice';
+import { setErrorBar, setSuccessBar } from '../Redux/varSlice';
+import { setOrderDetails, setOrderAvail } from '../Redux/socketSlice';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -71,7 +71,7 @@ const Order = () => {
 		try {
 			setOpen(false);
 			await axios.delete(`/orders/${order_no}`);
-			console.log('Order cancelled');
+			dispatch(setSuccessBar('Order deleted!'));
 			history.replace('/');
 		} catch (err) {
 			if (err.response.data.message) dispatch(setErrorBar(err.response.data.message));
@@ -85,6 +85,14 @@ const Order = () => {
 				const res = await axios.get(`/orders/${order_no}`);
 				setActiveStep(getActiveStep(res.data.order));
 				dispatch(setOrderDetails(res.data));
+				if (user.type === 'delivery') {
+					const res = await axios.get(`/orders/`, { params: { check: true } });
+					if (res.data.length) {
+						dispatch(setOrderAvail(res.data[0].orderno));
+					} else {
+						dispatch(setOrderAvail(null));
+					}
+				}
 			} catch (err) {
 				history.replace('/orders');
 				if (err.response) dispatch(setErrorBar(err.response.data.message));
@@ -92,7 +100,7 @@ const Order = () => {
 			}
 		};
 		fetchData();
-	}, [history, order_no, dispatch]);
+	}, [history, order_no, dispatch, user]);
 
 	return (
 		details && (
@@ -300,37 +308,41 @@ const Order = () => {
 							order={details.order}
 						/>
 					</Grid>
-					<Grid item>
-						<Dialog open={open} onClose={() => setOpen(false)}>
-							<DialogTitle>Are you sure you want to cancel this order?</DialogTitle>
-							<DialogActions>
+					{!details.order.isprepared && (
+						<Grid item>
+							<Dialog open={open} onClose={() => setOpen(false)}>
+								<DialogTitle>
+									Are you sure you want to cancel this order?
+								</DialogTitle>
+								<DialogActions>
+									<Button
+										color='primary'
+										variant='contained'
+										onClick={handleDeleteOrder}
+									>
+										Yes, cancel
+									</Button>
+									<Button
+										color='primary'
+										variant='contained'
+										onClick={() => setOpen(false)}
+									>
+										Close
+									</Button>
+								</DialogActions>
+							</Dialog>
+							{user.type === 'customer' && (
 								<Button
-									color='primary'
 									variant='contained'
-									onClick={handleDeleteOrder}
+									color='secondary'
+									startIcon={<CancelIcon />}
+									onClick={() => setOpen(true)}
 								>
-									Yes, cancel
+									Cancel order
 								</Button>
-								<Button
-									color='primary'
-									variant='contained'
-									onClick={() => setOpen(false)}
-								>
-									Close
-								</Button>
-							</DialogActions>
-						</Dialog>
-						{user.type === 'customer' && (
-							<Button
-								variant='contained'
-								color='secondary'
-								startIcon={<CancelIcon />}
-								onClick={() => setOpen(true)}
-							>
-								Cancel order
-							</Button>
-						)}
-					</Grid>
+							)}
+						</Grid>
+					)}
 				</Grid>
 			</Container>
 		)

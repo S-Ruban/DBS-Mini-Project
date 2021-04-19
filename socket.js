@@ -6,6 +6,7 @@ const users = new Map();
 let app;
 
 const accept = async (details) => {
+	console.log('ACCEPTED', details);
 	const client = await pool.connect();
 
 	try {
@@ -18,6 +19,8 @@ const accept = async (details) => {
 			false,
 			details.delUname
 		]);
+		await client.query('COMMIT');
+		return order.rows[0];
 	} catch (err) {
 		client.query('ROLLBACK');
 		console.log(err.stack);
@@ -25,12 +28,18 @@ const accept = async (details) => {
 	} finally {
 		client.release();
 	}
-	return order.rows[0];
 };
 
 const reject = (details) => {
+	console.log('REJECTED');
 	details.payload.rejectedBy.push(details.delUname);
 	app.get('workerUtils').addJob('assignDelivery', details.payload, { maxAttempts: 5 });
+};
+
+const getKey = (value) => {
+	const entry = [...users].find(([key, val]) => val == value);
+	if (entry) return entry[0];
+	return null;
 };
 
 const connect = (server, appReceived) => {
@@ -39,7 +48,10 @@ const connect = (server, appReceived) => {
 
 	io.on('connection', (socket) => {
 		console.log(`New Connection: ${socket.id}`);
-		socket.on('signin', (uname) => users.set(uname, socket.id));
+		socket.on('signin', (uname) => {
+			console.log(`Signed in ${uname} as ${socket.id}`);
+			users.set(uname, socket.id);
+		});
 		socket.on('delAccepted', async (details) => {
 			const order = await accept(details);
 			const rest_uname = await getRestUname(order.fssai);
@@ -47,6 +59,7 @@ const connect = (server, appReceived) => {
 				details.delUname
 			]);
 			const delDetails = { delivery: res.rows[0], delCharge: details.delCharge, order };
+			console.log(delDetails);
 			socket.emit('assigned', delDetails);
 			if (users.get(order.cust_uname))
 				io.to(users.get(order.cust_uname)).emit('assigned', delDetails);
@@ -54,6 +67,7 @@ const connect = (server, appReceived) => {
 		});
 		socket.on('delRejected', reject);
 		socket.on('disconnect', () => {
+			if (getKey(socket.id)) users.delete(getKey(socket.id));
 			console.log(`Disconnecting: ${socket.id}`);
 		});
 	});
@@ -61,6 +75,9 @@ const connect = (server, appReceived) => {
 	return io;
 };
 
-const getSocketID = (uname) => users.get(uname);
+const getSocketID = (uname) => {
+	console.log(users);
+	return users.get(uname);
+};
 
 module.exports = { connect, getSocketID };

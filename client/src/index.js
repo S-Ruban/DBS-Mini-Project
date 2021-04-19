@@ -10,7 +10,13 @@ const checkSignedIn = async () => {
 	const res = await axios.get('/session');
 	const user = res.data.user;
 	let preloadedState = {};
-	if (user) preloadedState = { user };
+	if (user) {
+		preloadedState = { user };
+		if (user.type === 'delivery') {
+			const res = await axios.get('/profile');
+			if (res.data.delivery.isavail) preloadedState.var = { delAvail: true };
+		}
+	}
 	return preloadedState;
 };
 

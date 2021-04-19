@@ -560,6 +560,7 @@ const RestProfile = () => {
 							color='primary'
 							startIcon={<LocationOnIcon />}
 							onClick={() => setOpenMap(true)}
+							disabled={!edit}
 						>
 							Change location
 						</Button>

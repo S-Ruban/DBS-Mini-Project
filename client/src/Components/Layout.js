@@ -187,8 +187,19 @@ const Layout = ({ children }) => {
 	};
 	const handleDelAvail = async (coordinates) => {
 		setOpenMap(false);
-		if (coordinates) {
+		if (coordinates === 'Unavail') {
 			try {
+				await axios.patch('/profile', { type: { isavail: false } });
+				dispatch(changeDelAvail(false));
+			} catch (err) {
+				if (err.response && err.response.data.message)
+					dispatch(setErrorBar(err.response.data.message));
+				else console.log(err);
+			}
+		} else if (coordinates) {
+			try {
+				console.log('Setting true');
+				coordinates.isavail = true;
 				await axios.patch('/profile', { type: coordinates });
 				dispatch(changeDelAvail(true));
 			} catch (err) {
@@ -308,7 +319,7 @@ const Layout = ({ children }) => {
 										checked={delAvail}
 										onChange={(e) => {
 											if (e.target.checked) setOpenMap(true);
-											else dispatch(changeDelAvail(false));
+											else handleDelAvail('Unavail');
 										}}
 									/>
 								}

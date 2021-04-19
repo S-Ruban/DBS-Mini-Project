@@ -6,6 +6,21 @@ import { getCenter } from 'geolib';
 
 const ViewMapDialog = ({ open, setOpen }) => {
 	const details = useSelector((state) => state.socket.orderDetails);
+	console.log('DETAILS', details);
+	const center = getCenter([
+		{
+			latitude: parseFloat(details.customer.lat),
+			longitude: parseFloat(details.customer.long)
+		},
+		{
+			latitude: parseFloat(details.restaurant.lat),
+			longitude: parseFloat(details.restaurant.long)
+		},
+		{
+			latitude: parseFloat(details.delivery.lat),
+			longitude: parseFloat(details.delivery.long)
+		}
+	]);
 
 	return (
 		<Dialog
@@ -16,11 +31,7 @@ const ViewMapDialog = ({ open, setOpen }) => {
 		>
 			<DialogContent>
 				<MapContainer
-					center={getCenter(
-						{ latitude: details.customer.lat, longitude: details.customer.long },
-						{ latitude: details.restaurant.lat, longitude: details.restaurant.long },
-						{ latitude: details.delivery.lat, longitude: details.delivery.long }
-					)}
+					center={[center.latitude, center.longitude]}
 					zoom={14}
 					scrollWheelZoom={false}
 					style={{ height: '50vh', width: '35vw' }}
@@ -35,23 +46,35 @@ const ViewMapDialog = ({ open, setOpen }) => {
 						accessToken={process.env.REACT_APP_MAPBOX}
 					/>
 					<Marker
-						position={[details.customer.lat, details.customer.long]}
+						position={[
+							parseFloat(details.customer.lat),
+							parseFloat(details.customer.long)
+						]}
 						title={details.customer.firstname}
 					/>
 					<Marker
-						position={[details.restaurant.lat, details.restaurant.long]}
+						position={[
+							parseFloat(details.restaurant.lat),
+							parseFloat(details.restaurant.long)
+						]}
 						title={details.restaurant.rest_name}
 					/>
 					<Marker
-						position={[details.delivery.lat, details.delivery.long]}
+						position={[
+							parseFloat(details.delivery.lat),
+							parseFloat(details.delivery.long)
+						]}
 						title={details.delivery.first_name}
 					/>
 					<Polyline
 						pathOptions={{ color: 'purple' }}
 						positions={[
-							[details.customer.lat, details.customer.long],
-							[details.restaurant.lat, details.restaurant.long],
-							[details.delivery.lat, details.delivery.long]
+							[parseFloat(details.customer.lat), parseFloat(details.customer.long)],
+							[
+								parseFloat(details.restaurant.lat),
+								parseFloat(details.restaurant.long)
+							],
+							[parseFloat(details.delivery.lat), parseFloat(details.delivery.long)]
 						]}
 					/>
 				</MapContainer>
